@@ -8,13 +8,14 @@ duration_peak = 4  # seconds
 rate_normal_min = 0.0001  # MB/s
 rate_normal_max = 1.1000  # MB/s
 rate_peak = 1.2000  # MB/s
-log_line_size = 100  # Average log line size in bytes
+log_line_size = 100  # Average size of a log line in bytes
 base_exit_probability = 0.12  # Base 12% chance to exit early
 rate_change_probability = 0.3  # 30% chance to change rate_max
 rate_change_max_percentage = 0.4  # Maximum 40% change in rate_max
 write_to_file = True  # Flag to indicate if logs should be written to a file
 log_file_path = 'logs.txt'  # File path for log output
 http_format_logs = True  # Flag to format logs in HTTP response-like format
+stop_after_seconds = -1  # Stop the script after X seconds (default -1 for continuous)
 
 log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR']
 log_messages = [
@@ -133,16 +134,17 @@ def write_logs_random_segments(total_duration, segment_max_duration, rate_min, r
         remaining_time -= segment_duration
 
 # Main loop
+start_time = time.time()
 if write_to_file:
     with open(log_file_path, 'w') as log_file:
-        while True:
+        while stop_after_seconds == -1 or time.time() - start_time < stop_after_seconds:
             # Normal logging period with random segments
             write_logs_random_segments(duration_normal, 5, rate_normal_min, rate_normal_max, base_exit_probability, log_file)  # segments up to 5 seconds
 
             # Peak logging period
             write_logs_random_rate(duration_peak, rate_normal_max, rate_peak, log_file)
 else:
-    while True:
+    while stop_after_seconds == -1 or time.time() - start_time < stop_after_seconds:
         # Normal logging period with random segments
         write_logs_random_segments(duration_normal, 5, rate_normal_min, rate_normal_max, base_exit_probability)  # segments up to 5 seconds
 
