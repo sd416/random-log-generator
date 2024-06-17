@@ -2,7 +2,7 @@ import random
 import time
 import datetime
 
-# Configuration
+# Default configuration values
 duration_normal = 120  # seconds
 duration_peak = 4  # seconds
 rate_normal_min = 0.0001  # MB/s
@@ -75,7 +75,7 @@ log_messages = [
 
 http_status_codes = ['200 OK', '201 Created', '204 No Content', '400 Bad Request', '401 Unauthorized', '403 Forbidden', '404 Not Found', '500 Internal Server Error', '502 Bad Gateway', '503 Service Unavailable']
 
-def generate_log_line():
+def generate_log_line(http_format_logs=http_format_logs):
     """Generate a single log line with a timestamp and realistic message."""
     timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
     log_level = random.choice(log_levels)
@@ -87,7 +87,7 @@ def generate_log_line():
     else:
         return f"{timestamp} {log_level} {message}"
 
-def write_logs(rate, duration, log_file=None):
+def write_logs(rate, duration, log_file=None, http_format_logs=http_format_logs):
     """Write logs at a specified rate for a given duration."""
     end_time = time.time() + duration
     bytes_per_second = int(rate * 1024 * 1024)
@@ -96,7 +96,7 @@ def write_logs(rate, duration, log_file=None):
     while time.time() < end_time:
         start_time = time.time()
         for _ in range(int(lines_per_second)):
-            log_line = generate_log_line()
+            log_line = generate_log_line(http_format_logs)
             if log_file:
                 log_file.write(f"{log_line}\n")
             else:
@@ -105,7 +105,7 @@ def write_logs(rate, duration, log_file=None):
         time_to_sleep = max(0, 1 - elapsed_time)
         time.sleep(time_to_sleep)
 
-def write_logs_random_rate(duration, rate_min, rate_max, log_file=None):
+def write_logs_random_rate(duration, rate_min, rate_max, log_file=None, http_format_logs=http_format_logs):
     """Write logs at a random rate between rate_min and rate_max for a given duration."""
     end_time = time.time() + duration
     remaining_time = duration
@@ -118,10 +118,10 @@ def write_logs_random_rate(duration, rate_min, rate_max, log_file=None):
     while remaining_time > 0:
         segment_duration = random.uniform(1, remaining_time)
         rate = random.uniform(rate_min, rate_max)
-        write_logs(rate, segment_duration, log_file)
+        write_logs(rate, segment_duration, log_file, http_format_logs)
         remaining_time -= segment_duration
 
-def write_logs_random_segments(total_duration, segment_max_duration, rate_min, rate_max, base_exit_probability, log_file=None):
+def write_logs_random_segments(total_duration, segment_max_duration, rate_min, rate_max, base_exit_probability, log_file=None, http_format_logs=http_format_logs):
     """Write logs in random segments with a chance to exit early."""
     remaining_time = total_duration
     while remaining_time > 0:
@@ -130,23 +130,27 @@ def write_logs_random_segments(total_duration, segment_max_duration, rate_min, r
             print("Exiting early based on random exit clause.")
             return
         segment_duration = random.uniform(1, min(segment_max_duration, remaining_time))
-        write_logs_random_rate(segment_duration, rate_min, rate_max, log_file)
+        write_logs_random_rate(segment_duration, rate_min, rate_max, log_file, http_format_logs)
         remaining_time -= segment_duration
 
-# Main loop
-start_time = time.time()
-if write_to_file:
-    with open(log_file_path, 'w') as log_file:
+def main(duration_normal, duration_peak, rate_normal_min, rate_normal_max, rate_peak, log_line_size, base_exit_probability, rate_change_probability, rate_change_max_percentage, write_to_file, log_file_path, http_format_logs, stop_after_seconds):
+    start_time = time.time()
+    if write_to_file:
+        with open(log_file_path, 'w') as log_file:
+            while stop_after_seconds == -1 or time.time() - start_time < stop_after_seconds:
+                # Normal logging period with random segments
+                write_logs_random_segments(duration_normal, 5, rate_normal_min, rate_normal_max, base_exit_probability, log_file, http_format_logs)  # segments up to 5 seconds
+
+                # Peak logging period
+                write_logs_random_rate(duration_peak, rate_normal_max, rate_peak, log_file, http_format_logs)
+    else:
         while stop_after_seconds == -1 or time.time() - start_time < stop_after_seconds:
             # Normal logging period with random segments
-            write_logs_random_segments(duration_normal, 5, rate_normal_min, rate_normal_max, base_exit_probability, log_file)  # segments up to 5 seconds
+            write_logs_random_segments(duration_normal, 5, rate_normal_min, rate_normal_max, base_exit_probability, None, http_format_logs)  # segments up to 5 seconds
 
             # Peak logging period
-            write_logs_random_rate(duration_peak, rate_normal_max, rate_peak, log_file)
-else:
-    while stop_after_seconds == -1 or time.time() - start_time < stop_after_seconds:
-        # Normal logging period with random segments
-        write_logs_random_segments(duration_normal, 5, rate_normal_min, rate_normal_max, base_exit_probability)  # segments up to 5 seconds
+            write_logs_random_rate(duration_peak, rate_normal_max, rate_peak, None, http_format_logs)
 
-        # Peak logging period
-        write_logs_random_rate(duration_peak, rate_normal_max, rate_peak)
+if __name__ == "__main__":
+    main(duration_normal, duration_peak, rate_normal_min, rate_normal_max, rate_peak, log_line_size, base_exit_probability, rate_change_probability, rate_change_max_percentage, write_to_file, log_file_path, http_format_logs, stop_after_seconds)
+
