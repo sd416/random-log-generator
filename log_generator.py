@@ -16,6 +16,7 @@ write_to_file = True  # Flag to indicate if logs should be written to a file
 log_file_path = 'logs.txt'  # File path for log output
 http_format_logs = True  # Flag to format logs in HTTP response-like format
 stop_after_seconds = -1  # Stop the script after X seconds (default -1 for continuous)
+custom_app_names = []  # List of custom application names
 
 log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR']
 log_messages = [
@@ -73,21 +74,36 @@ log_messages = [
     'User account unlocked'
 ]
 
-http_status_codes = ['200 OK', '201 Created', '204 No Content', '400 Bad Request', '401 Unauthorized', '403 Forbidden', '404 Not Found', '500 Internal Server Error', '502 Bad Gateway', '503 Service Unavailable']
+http_status_codes = {
+    '200 OK': ['User login successful', 'Data fetched successfully', 'User logged out', 'Service started', 'Service stopped', 'Configuration updated', 'Data processed successfully', 'Database connection established', 'Cache cleared', 'Scheduled task started', 'Scheduled task completed', 'Backup completed successfully', 'Session token refreshed', 'New user registered', 'Password change requested', 'Password change successful', 'API request received', 'API response sent', 'Service health check passed', 'Application deployment started', 'Application deployment completed', 'Application rollback initiated', 'Application rollback completed', 'File uploaded successfully', 'User profile updated', 'Email sent successfully', 'SMS sent successfully', 'Payment transaction completed', 'User account unlocked'],
+    '400 Bad Request': ['Invalid user input detected', 'Configuration validation error', 'Credit card validation error'],
+    '401 Unauthorized': ['User login failed', 'Permission denied'],
+    '403 Forbidden': ['Permission denied'],
+    '404 Not Found': ['File not found'],
+    '500 Internal Server Error': ['Error fetching data from database', 'Unexpected error occurred', 'Resource allocation failure', 'Database connection lost', 'Cache update failed', 'Backup failed', 'Password change failed', 'Service health check failed', 'File upload failed', 'User profile update failed', 'Email delivery failed', 'SMS delivery failed', 'Payment transaction failed', 'User account locked']
+}
 
-def generate_log_line(http_format_logs=http_format_logs):
+def generate_log_line(http_format_logs=http_format_logs, custom_app_names=custom_app_names):
     """Generate a single log line with a timestamp and realistic message."""
     timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
     log_level = random.choice(log_levels)
     message = random.choice(log_messages)
     
+    if custom_app_names:
+        app_name = random.choice(custom_app_names)
+        message = f"{app_name}: {message}"
+    
     if http_format_logs:
-        status_code = random.choice(http_status_codes)
+        for status_code, messages in http_status_codes.items():
+            if message in messages:
+                return f"{timestamp} {log_level} HTTP/1.1 {status_code} {message}"
+        # Fallback in case message does not match any status code
+        status_code = random.choice(list(http_status_codes.keys()))
         return f"{timestamp} {log_level} HTTP/1.1 {status_code} {message}"
     else:
         return f"{timestamp} {log_level} {message}"
 
-def write_logs(rate, duration, log_file=None, http_format_logs=http_format_logs):
+def write_logs(rate, duration, log_file=None, http_format_logs=http_format_logs, custom_app_names=custom_app_names):
     """Write logs at a specified rate for a given duration."""
     end_time = time.time() + duration
     bytes_per_second = int(rate * 1024 * 1024)
@@ -96,7 +112,7 @@ def write_logs(rate, duration, log_file=None, http_format_logs=http_format_logs)
     while time.time() < end_time:
         start_time = time.time()
         for _ in range(int(lines_per_second)):
-            log_line = generate_log_line(http_format_logs)
+            log_line = generate_log_line(http_format_logs, custom_app_names)
             if log_file:
                 log_file.write(f"{log_line}\n")
             else:
@@ -105,7 +121,7 @@ def write_logs(rate, duration, log_file=None, http_format_logs=http_format_logs)
         time_to_sleep = max(0, 1 - elapsed_time)
         time.sleep(time_to_sleep)
 
-def write_logs_random_rate(duration, rate_min, rate_max, log_file=None, http_format_logs=http_format_logs):
+def write_logs_random_rate(duration, rate_min, rate_max, log_file=None, http_format_logs=http_format_logs, custom_app_names=custom_app_names):
     """Write logs at a random rate between rate_min and rate_max for a given duration."""
     end_time = time.time() + duration
     remaining_time = duration
@@ -118,10 +134,10 @@ def write_logs_random_rate(duration, rate_min, rate_max, log_file=None, http_for
     while remaining_time > 0:
         segment_duration = random.uniform(1, remaining_time)
         rate = random.uniform(rate_min, rate_max)
-        write_logs(rate, segment_duration, log_file, http_format_logs)
+        write_logs(rate, segment_duration, log_file, http_format_logs, custom_app_names)
         remaining_time -= segment_duration
 
-def write_logs_random_segments(total_duration, segment_max_duration, rate_min, rate_max, base_exit_probability, log_file=None, http_format_logs=http_format_logs):
+def write_logs_random_segments(total_duration, segment_max_duration, rate_min, rate_max, base_exit_probability, log_file=None, http_format_logs=http_format_logs, custom_app_names=custom_app_names):
     """Write logs in random segments with a chance to exit early."""
     remaining_time = total_duration
     while remaining_time > 0:
@@ -130,27 +146,26 @@ def write_logs_random_segments(total_duration, segment_max_duration, rate_min, r
             print("Exiting early based on random exit clause.")
             return
         segment_duration = random.uniform(1, min(segment_max_duration, remaining_time))
-        write_logs_random_rate(segment_duration, rate_min, rate_max, log_file, http_format_logs)
+        write_logs_random_rate(segment_duration, rate_min, rate_max, log_file, http_format_logs, custom_app_names)
         remaining_time -= segment_duration
 
-def main(duration_normal, duration_peak, rate_normal_min, rate_normal_max, rate_peak, log_line_size, base_exit_probability, rate_change_probability, rate_change_max_percentage, write_to_file, log_file_path, http_format_logs, stop_after_seconds):
+def main(duration_normal, duration_peak, rate_normal_min, rate_normal_max, rate_peak, log_line_size, base_exit_probability, rate_change_probability, rate_change_max_percentage, write_to_file, log_file_path, http_format_logs, stop_after_seconds, custom_app_names):
     start_time = time.time()
     if write_to_file:
         with open(log_file_path, 'w') as log_file:
             while stop_after_seconds == -1 or time.time() - start_time < stop_after_seconds:
                 # Normal logging period with random segments
-                write_logs_random_segments(duration_normal, 5, rate_normal_min, rate_normal_max, base_exit_probability, log_file, http_format_logs)  # segments up to 5 seconds
+                write_logs_random_segments(duration_normal, 5, rate_normal_min, rate_normal_max, base_exit_probability, log_file, http_format_logs, custom_app_names)  # segments up to 5 seconds
 
                 # Peak logging period
-                write_logs_random_rate(duration_peak, rate_normal_max, rate_peak, log_file, http_format_logs)
+                write_logs_random_rate(duration_peak, rate_normal_max, rate_peak, log_file, http_format_logs, custom_app_names)
     else:
         while stop_after_seconds == -1 or time.time() - start_time < stop_after_seconds:
             # Normal logging period with random segments
-            write_logs_random_segments(duration_normal, 5, rate_normal_min, rate_normal_max, base_exit_probability, None, http_format_logs)  # segments up to 5 seconds
+            write_logs_random_segments(duration_normal, 5, rate_normal_min, rate_normal_max, base_exit_probability, None, http_format_logs, custom_app_names)  # segments up to 5 seconds
 
             # Peak logging period
-            write_logs_random_rate(duration_peak, rate_normal_max, rate_peak, None, http_format_logs)
+            write_logs_random_rate(duration_peak, rate_normal_max, rate_peak, None, http_format_logs, custom_app_names)
 
 if __name__ == "__main__":
-    main(duration_normal, duration_peak, rate_normal_min, rate_normal_max, rate_peak, log_line_size, base_exit_probability, rate_change_probability, rate_change_max_percentage, write_to_file, log_file_path, http_format_logs, stop_after_seconds)
-
+    main(duration_normal, duration_peak, rate_normal_min, rate_normal_max, rate_peak, log_line_size, base_exit_probability, rate_change_probability, rate_change_max_percentage, write_to_file, log_file_path, http_format_logs, stop_after_seconds, custom_app_names)

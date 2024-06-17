@@ -26,6 +26,8 @@ The script is configured through the following parameters. Modify the configurat
 - `write_to_file`: Flag to indicate if logs should be written to a file (`True` or `False`).
 - `log_file_path`: File path for log output (if `write_to_file` is `True`).
 - `http_format_logs`: Flag to format logs in HTTP response-like format (`True` or `False`).
+- `custom_app_names`: List of custom application names to be included in log messages.
+
 
 ## Example Configuration Parameters
 
@@ -42,6 +44,7 @@ rate_change_max_percentage = 0.3  # Maximum percentage change in the log generat
 write_to_file = True  # Flag to indicate if logs should be written to a file
 log_file_path = 'logs.txt'  # File path for log output
 http_format_logs = False  # Flag to format logs in HTTP response-like format
+custom_app_names = ['App1', 'App2', 'App3']  # List of custom application names
 ```
 
 
