@@ -22,8 +22,6 @@ test_config = {
     'custom_log_format': "{timestamp} {log_level} {ip_address} {user_agent} {message}"
 }
 
-metrics = Metrics()
-
 def test_generate_log_line():
     print("Testing generate_log_line")
     log_line = generate_log_line(http_format_logs=test_config['http_format_logs'], custom_app_names=test_config['custom_app_names'])
@@ -82,7 +80,29 @@ def test_main_no_file():
     print("Testing main function without file writing")
     test_config['write_to_file'] = False
     test_config['stop_after_seconds'] = 5  # Run for a shorter duration for testing
-    main(test_config)
+
+    # Create a new Metrics instance for the test
+    metrics = Metrics()
+
+    # Adjust the main function to accept the metrics instance
+    def main_with_metrics(config, metrics_instance):
+        global metrics
+        metrics = metrics_instance  # Use the provided metrics instance
+
+        start_time = time.time()
+        iteration = 0
+
+        while config['stop_after_seconds'] == -1 or time.time() - start_time < config['stop_after_seconds']:
+            write_logs_random_segments(config['duration_normal'], 5, config['rate_normal_min'], config['rate_normal_max'], config['base_exit_probability'], None, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'])
+            write_logs_random_rate(config['duration_peak'], config['rate_normal_max'], config['rate_peak'], None, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'])
+
+            iteration += 1
+            print(f"Iteration {iteration} metrics: {metrics.get_stats()}")
+
+        # Print final metrics
+        print(f"Final metrics: {metrics.get_stats()}")
+
+    main_with_metrics(test_config, metrics)
     assert metrics.get_stats()['total_logs'] > 0
 
 def test_exit_early(tmp_path):
