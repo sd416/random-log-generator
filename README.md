@@ -9,6 +9,9 @@ This script generates realistic log entries with configurable rates and formats,
 - Supports HTTP response-like log format.
 - Option to write logs to a specified file or print to the console.
 - Random rate changes and early exit probabilities for simulating real-world scenarios.
+- Generates random user agents for more realistic HTTP logs.
+- Collects metrics such as total logs generated, total bytes written, and average log generation rate.
+- Supports custom log formats.
 
 ## Configuration
 
@@ -27,32 +30,34 @@ The script is configured through the following parameters. Modify the configurat
 - `log_file_path`: File path for log output (if `write_to_file` is `True`).
 - `http_format_logs`: Flag to format logs in HTTP response-like format (`True` or `False`).
 - `custom_app_names`: List of custom application names to be included in log messages.
-
+- `custom_log_format`: Custom format for log messages.
 
 ## Example Configuration Parameters
 
 ```python
-duration_normal = 60  # Duration of the normal logging period in seconds
-duration_peak = 10  # Duration of the peak logging period in seconds
-rate_normal_min = 0.0005  # Minimum log generation rate during the normal period (in MB/s)
-rate_normal_max = 0.8000  # Maximum log generation rate during the normal period (in MB/s)
-rate_peak = 1.5000  # Log generation rate during the peak period (in MB/s)
-log_line_size = 100  # Average size of a log line in bytes
-base_exit_probability = 0.10  # Base probability of exiting early during a logging segment
-rate_change_probability = 0.2  # Probability of changing the maximum log generation rate
-rate_change_max_percentage = 0.3  # Maximum percentage change in the log generation rate
-write_to_file = True  # Flag to indicate if logs should be written to a file
-log_file_path = 'logs.txt'  # File path for log output
-http_format_logs = False  # Flag to format logs in HTTP response-like format
-custom_app_names = ['App1', 'App2', 'App3']  # List of custom application names
-```
+CONFIG = {
+    'duration_normal': 60,  # Duration of the normal logging period in seconds
+    'duration_peak': 10,  # Duration of the peak logging period in seconds
+    'rate_normal_min': 0.0005,  # Minimum log generation rate during the normal period (in MB/s)
+    'rate_normal_max': 0.8000,  # Maximum log generation rate during the normal period (in MB/s)
+    'rate_peak': 1.5000,  # Log generation rate during the peak period (in MB/s)
+    'log_line_size': 100,  # Average size of a log line in bytes
+    'base_exit_probability': 0.10,  # Base probability of exiting early during a logging segment
+    'rate_change_probability': 0.2,  # Probability of changing the maximum log generation rate
+    'rate_change_max_percentage': 0.3,  # Maximum percentage change in the log generation rate
+    'write_to_file': True,  # Flag to indicate if logs should be written to a file
+    'log_file_path': 'logs.txt',  # File path for log output
+    'http_format_logs': False,  # Flag to format logs in HTTP response-like format
+    'custom_app_names': ['App1', 'App2', 'App3'],  # List of custom application names
+    'custom_log_format': "{timestamp} {log_level} {ip_address} {user_agent} {message}"  # Custom log format
+}
 
 
 ## Usage
 
 ### Prerequisites
 
-- Python 3.x
+- Python 3.9 and above
 
 ### Running the Script
 
