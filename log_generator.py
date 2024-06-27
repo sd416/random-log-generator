@@ -1,3 +1,4 @@
+# log_generator.py
 import random
 import time
 import datetime
@@ -153,8 +154,6 @@ class Metrics:
             "min_rate_mb_s": min(self.rates) if self.rates else 0
         }
 
-metrics = Metrics()
-
 def generate_ip_address():
     """Generate a random IP address."""
     return str(ipaddress.IPv4Address(random.randint(0, 2**32 - 1)))
@@ -186,7 +185,7 @@ def generate_log_line(http_format_logs=CONFIG['http_format_logs'], custom_app_na
             message=message
         )
 
-def write_logs(rate, duration, log_file=None, http_format_logs=CONFIG['http_format_logs'], custom_app_names=CONFIG['custom_app_names'], custom_format=CONFIG['custom_log_format']):
+def write_logs(rate, duration, log_file=None, http_format_logs=CONFIG['http_format_logs'], custom_app_names=CONFIG['custom_app_names'], custom_format=CONFIG['custom_log_format'], metrics=None):
     """Write logs at a specified rate for a given duration using token bucket algorithm."""
     print(f"Writing logs at rate: {rate:.4f} MB/s for {duration:.2f} seconds")
     token_bucket = TokenBucket(rate * 1024 * 1024 / CONFIG['log_line_size'], rate * 1024 * 1024 / CONFIG['log_line_size'])
@@ -206,9 +205,10 @@ def write_logs(rate, duration, log_file=None, http_format_logs=CONFIG['http_form
         else:
             time.sleep(0.01)  # Sleep for a short time if no tokens are available
 
-    metrics.update(logs_written, bytes_written)
+    if metrics:
+        metrics.update(logs_written, bytes_written)
 
-def write_logs_random_rate(duration, rate_min, rate_max, log_file=None, http_format_logs=CONFIG['http_format_logs'], custom_app_names=CONFIG['custom_app_names'], custom_format=CONFIG['custom_log_format']):
+def write_logs_random_rate(duration, rate_min, rate_max, log_file=None, http_format_logs=CONFIG['http_format_logs'], custom_app_names=CONFIG['custom_app_names'], custom_format=CONFIG['custom_log_format'], metrics=None):
     """Write logs at a random rate between rate_min and rate_max for a given duration using token bucket algorithm."""
     end_time = time.time() + duration
     remaining_time = duration
@@ -222,10 +222,10 @@ def write_logs_random_rate(duration, rate_min, rate_max, log_file=None, http_for
         segment_duration = random.uniform(1, remaining_time)
         rate = random.uniform(rate_min, rate_max)
         print(f"Selected random rate: {rate:.4f} MB/s")
-        write_logs(rate, segment_duration, log_file, http_format_logs, custom_app_names, custom_format)
+        write_logs(rate, segment_duration, log_file, http_format_logs, custom_app_names, custom_format, metrics)
         remaining_time -= segment_duration
 
-def write_logs_random_segments(total_duration, segment_max_duration, rate_min, rate_max, base_exit_probability, log_file=None, http_format_logs=CONFIG['http_format_logs'], custom_app_names=CONFIG['custom_app_names'], custom_format=CONFIG['custom_log_format']):
+def write_logs_random_segments(total_duration, segment_max_duration, rate_min, rate_max, base_exit_probability, log_file=None, http_format_logs=CONFIG['http_format_logs'], custom_app_names=CONFIG['custom_app_names'], custom_format=CONFIG['custom_log_format'], metrics=None):
     """Write logs in random segments with a chance to exit early using token bucket algorithm."""
     remaining_time = total_duration
     while remaining_time > 0:
@@ -234,31 +234,34 @@ def write_logs_random_segments(total_duration, segment_max_duration, rate_min, r
             print("Exiting early based on random exit clause.")
             return
         segment_duration = random.uniform(1, min(segment_max_duration, remaining_time))
-        write_logs_random_rate(segment_duration, rate_min, rate_max, log_file, http_format_logs, custom_app_names, custom_format)
+        write_logs_random_rate(segment_duration, rate_min, rate_max, log_file, http_format_logs, custom_app_names, custom_format, metrics)
         remaining_time -= segment_duration
 
-def main(config):
+def main(config, metrics_instance=None):
     start_time = time.time()
     iteration = 0
+
+    if metrics_instance is None:
+        metrics_instance = Metrics()
 
     if config['write_to_file']:
         with open(config['log_file_path'], 'w') as log_file:
             while config['stop_after_seconds'] == -1 or time.time() - start_time < config['stop_after_seconds']:
-                write_logs_random_segments(config['duration_normal'], 5, config['rate_normal_min'], config['rate_normal_max'], config['base_exit_probability'], log_file, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'])
-                write_logs_random_rate(config['duration_peak'], config['rate_normal_max'], config['rate_peak'], log_file, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'])
+                write_logs_random_segments(config['duration_normal'], 5, config['rate_normal_min'], config['rate_normal_max'], config['base_exit_probability'], log_file, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'], metrics_instance)
+                write_logs_random_rate(config['duration_peak'], config['rate_normal_max'], config['rate_peak'], log_file, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'], metrics_instance)
 
                 iteration += 1
-                print(f"Iteration {iteration} metrics: {metrics.get_stats()}")
+                print(f"Iteration {iteration} metrics: {metrics_instance.get_stats()}")
     else:
         while config['stop_after_seconds'] == -1 or time.time() - start_time < config['stop_after_seconds']:
-            write_logs_random_segments(config['duration_normal'], 5, config['rate_normal_min'], config['rate_normal_max'], config['base_exit_probability'], None, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'])
-            write_logs_random_rate(config['duration_peak'], config['rate_normal_max'], config['rate_peak'], None, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'])
+            write_logs_random_segments(config['duration_normal'], 5, config['rate_normal_min'], config['rate_normal_max'], config['base_exit_probability'], None, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'], metrics_instance)
+            write_logs_random_rate(config['duration_peak'], config['rate_normal_max'], config['rate_peak'], None, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'], metrics_instance)
 
             iteration += 1
-            print(f"Iteration {iteration} metrics: {metrics.get_stats()}")
+            print(f"Iteration {iteration} metrics: {metrics_instance.get_stats()}")
 
     # Print final metrics
-    print(f"Final metrics: {metrics.get_stats()}")
+    print(f"Final metrics: {metrics_instance.get_stats()}")
 
 if __name__ == "__main__":
     main(CONFIG)
