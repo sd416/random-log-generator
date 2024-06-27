@@ -52,6 +52,7 @@ CONFIG = {
     'custom_log_format': "{timestamp} {log_level} {ip_address} {user_agent} {message}"  # Custom log format
 }
 
+```
 
 ## Usage
 
