@@ -1,4 +1,3 @@
-import pytest
 import time
 import ipaddress
 import random
@@ -27,11 +26,16 @@ test_config = {
     'custom_log_format': "{timestamp} {log_level} {ip_address} {user_agent} {message}"
 }
 
+
 def test_generate_log_line():
     print("Testing generate_log_line")
-    log_line = generate_log_line(http_format_logs=test_config['http_format_logs'], custom_app_names=test_config['custom_app_names'])
+    log_line = generate_log_line(
+        http_format_logs=test_config['http_format_logs'],
+        custom_app_names=test_config['custom_app_names']
+    )
     assert log_line is not None
     assert len(log_line) > 0
+
 
 def test_generate_random_user_agent():
     print("Testing generate_random_user_agent")
@@ -39,35 +43,53 @@ def test_generate_random_user_agent():
     assert user_agent is not None
     assert "Mozilla/5.0" in user_agent
 
+
 def test_generate_ip_address():
     print("Testing generate_ip_address")
     ip_address = generate_ip_address()
     assert ip_address is not None
     assert ipaddress.ip_address(ip_address)
 
+
 def test_write_logs(tmp_path):
     print("Testing write_logs")
     log_file_path = tmp_path / "test_logs.txt"
     metrics_instance = Metrics()
     with open(log_file_path, 'w') as log_file:
-        write_logs(test_config['rate_normal_min'], test_config['duration_normal'], log_file, http_format_logs=test_config['http_format_logs'], custom_app_names=test_config['custom_app_names'], metrics=metrics_instance)
+        write_logs(
+            test_config['rate_normal_min'], test_config['duration_normal'],
+            log_file, http_format_logs=test_config['http_format_logs'],
+            custom_app_names=test_config['custom_app_names'], metrics=metrics_instance
+        )
     assert log_file_path.read_text().strip() != ""
+
 
 def test_write_logs_random_rate(tmp_path):
     print("Testing write_logs_random_rate")
     log_file_path = tmp_path / "test_logs_random_rate.txt"
     metrics_instance = Metrics()
     with open(log_file_path, 'w') as log_file:
-        write_logs_random_rate(test_config['duration_peak'], test_config['rate_normal_min'], test_config['rate_normal_max'], log_file, http_format_logs=test_config['http_format_logs'], custom_app_names=test_config['custom_app_names'], metrics=metrics_instance)
+        write_logs_random_rate(
+            test_config['duration_peak'], test_config['rate_normal_min'],
+            test_config['rate_normal_max'], log_file, http_format_logs=test_config['http_format_logs'],
+            custom_app_names=test_config['custom_app_names'], metrics=metrics_instance
+        )
     assert log_file_path.read_text().strip() != ""
+
 
 def test_write_logs_random_segments(tmp_path):
     print("Testing write_logs_random_segments")
     log_file_path = tmp_path / "test_logs_random_segments.txt"
     metrics_instance = Metrics()
     with open(log_file_path, 'w') as log_file:
-        write_logs_random_segments(test_config['duration_normal'], 1, test_config['rate_normal_min'], test_config['rate_normal_max'], test_config['base_exit_probability'], log_file, http_format_logs=test_config['http_format_logs'], custom_app_names=test_config['custom_app_names'], metrics=metrics_instance)
+        write_logs_random_segments(
+            test_config['duration_normal'], 1, test_config['rate_normal_min'],
+            test_config['rate_normal_max'], test_config['base_exit_probability'],
+            log_file, http_format_logs=test_config['http_format_logs'],
+            custom_app_names=test_config['custom_app_names'], metrics=metrics_instance
+        )
     assert log_file_path.read_text().strip() != ""
+
 
 def test_main(tmp_path):
     print("Testing main function")
@@ -84,6 +106,7 @@ def test_main(tmp_path):
             break
     assert log_file_path.read_text().strip() != ""
 
+
 def test_main_no_file():
     print("Testing main function without file writing")
     test_config['write_to_file'] = False
@@ -97,11 +120,17 @@ def test_main_no_file():
     main(test_config, metrics_instance=test_metrics)
     assert test_metrics.get_stats()['total_logs'] > 0
 
+
 def test_exit_early(tmp_path):
     print("Testing early exit in write_logs_random_segments")
     log_file_path = tmp_path / "test_exit_early.txt"
     test_config['base_exit_probability'] = 1.0  # Ensure early exit
     metrics_instance = Metrics()
     with open(log_file_path, 'w') as log_file:
-        write_logs_random_segments(test_config['duration_normal'], 1, test_config['rate_normal_min'], test_config['rate_normal_max'], test_config['base_exit_probability'], log_file, test_config['http_format_logs'], test_config['custom_app_names'], metrics=metrics_instance)
+        write_logs_random_segments(
+            test_config['duration_normal'], 1, test_config['rate_normal_min'],
+            test_config['rate_normal_max'], test_config['base_exit_probability'],
+            log_file, test_config['http_format_logs'], test_config['custom_app_names'],
+            metrics=metrics_instance
+        )
     assert log_file_path.read_text().strip() == ""
