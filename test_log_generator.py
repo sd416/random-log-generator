@@ -1,7 +1,11 @@
 import pytest
 import time
 import ipaddress
-from log_generator import generate_log_line, write_logs, write_logs_random_rate, write_logs_random_segments, main, generate_random_user_agent, generate_ip_address, Metrics
+from log_generator import (
+    generate_log_line, write_logs, write_logs_random_rate,
+    write_logs_random_segments, main, generate_random_user_agent,
+    generate_ip_address, Metrics, CONFIG
+)
 
 # Override the configurations for testing
 test_config = {
@@ -111,16 +115,3 @@ def test_exit_early(tmp_path):
     with open(log_file_path, 'w') as log_file:
         write_logs_random_segments(test_config['duration_normal'], 1, test_config['rate_normal_min'], test_config['rate_normal_max'], test_config['base_exit_probability'], log_file, test_config['http_format_logs'], test_config['custom_app_names'])
     assert log_file_path.read_text().strip() == ""
-
-# Add this function to the main script (log_generator.py)
-def write_logs_random_segments(total_duration, segment_max_duration, rate_min, rate_max, base_exit_probability, log_file=None, http_format_logs=CONFIG['http_format_logs'], custom_app_names=CONFIG['custom_app_names'], custom_format=CONFIG['custom_log_format']):
-    """Write logs in random segments with a chance to exit early using token bucket algorithm."""
-    remaining_time = total_duration
-    while remaining_time > 0:
-        exit_probability = base_exit_probability * random.uniform(0.5, 1.5)  # Add variability to the exit probability
-        if random.random() < exit_probability:
-            print("Exiting early based on random exit clause.")
-            return  # Exit immediately without writing any logs
-        segment_duration = random.uniform(1, min(segment_max_duration, remaining_time))
-        write_logs_random_rate(segment_duration, rate_min, rate_max, log_file, http_format_logs, custom_app_names, custom_format)
-        remaining_time -= segment_duration
