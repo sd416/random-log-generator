@@ -79,16 +79,15 @@ def test_main(tmp_path):
 def test_main_no_file():
     print("Testing main function without file writing")
     test_config['write_to_file'] = False
-    test_config['stop_after_seconds'] = 5  # Run for a shorter duration for testing
+    test_config['stop_after_seconds'] = 10  # Increase duration
+    test_config['rate_normal_min'] = 0.01  # Increase minimum rate
+    test_config['rate_normal_max'] = 0.1   # Increase maximum rate
 
     # Create a new Metrics instance for the test
-    metrics = Metrics()
+    test_metrics = Metrics()
 
-    # Adjust the main function to accept the metrics instance
-    def main_with_metrics(config, metrics_instance):
-        global metrics
-        metrics = metrics_instance  # Use the provided metrics instance
-
+    # Modify main function to accept metrics as an argument
+    def main_with_metrics(config, metrics):
         start_time = time.time()
         iteration = 0
 
@@ -102,8 +101,8 @@ def test_main_no_file():
         # Print final metrics
         print(f"Final metrics: {metrics.get_stats()}")
 
-    main_with_metrics(test_config, metrics)
-    assert metrics.get_stats()['total_logs'] > 0
+    main_with_metrics(test_config, test_metrics)
+    assert test_metrics.get_stats()['total_logs'] > 0
 
 def test_exit_early(tmp_path):
     print("Testing early exit in write_logs_random_segments")
@@ -112,3 +111,16 @@ def test_exit_early(tmp_path):
     with open(log_file_path, 'w') as log_file:
         write_logs_random_segments(test_config['duration_normal'], 1, test_config['rate_normal_min'], test_config['rate_normal_max'], test_config['base_exit_probability'], log_file, test_config['http_format_logs'], test_config['custom_app_names'])
     assert log_file_path.read_text().strip() == ""
+
+# Add this function to the main script (log_generator.py)
+def write_logs_random_segments(total_duration, segment_max_duration, rate_min, rate_max, base_exit_probability, log_file=None, http_format_logs=CONFIG['http_format_logs'], custom_app_names=CONFIG['custom_app_names'], custom_format=CONFIG['custom_log_format']):
+    """Write logs in random segments with a chance to exit early using token bucket algorithm."""
+    remaining_time = total_duration
+    while remaining_time > 0:
+        exit_probability = base_exit_probability * random.uniform(0.5, 1.5)  # Add variability to the exit probability
+        if random.random() < exit_probability:
+            print("Exiting early based on random exit clause.")
+            return  # Exit immediately without writing any logs
+        segment_duration = random.uniform(1, min(segment_max_duration, remaining_time))
+        write_logs_random_rate(segment_duration, rate_min, rate_max, log_file, http_format_logs, custom_app_names, custom_format)
+        remaining_time -= segment_duration
