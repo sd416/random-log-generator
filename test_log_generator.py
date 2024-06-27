@@ -1,6 +1,7 @@
 import pytest
 import time
 import ipaddress
+import random
 from log_generator import (
     generate_log_line, write_logs, write_logs_random_rate,
     write_logs_random_segments, main, generate_random_user_agent,
@@ -91,7 +92,7 @@ def test_main_no_file():
     test_metrics = Metrics()
 
     # Modify main function to accept metrics as an argument
-    def main_with_metrics(config, metrics):
+    def main_with_metrics(config, metrics_instance):
         start_time = time.time()
         iteration = 0
 
@@ -100,10 +101,10 @@ def test_main_no_file():
             write_logs_random_rate(config['duration_peak'], config['rate_normal_max'], config['rate_peak'], None, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'])
 
             iteration += 1
-            print(f"Iteration {iteration} metrics: {metrics.get_stats()}")
+            print(f"Iteration {iteration} metrics: {metrics_instance.get_stats()}")
 
         # Print final metrics
-        print(f"Final metrics: {metrics.get_stats()}")
+        print(f"Final metrics: {metrics_instance.get_stats()}")
 
     main_with_metrics(test_config, test_metrics)
     assert test_metrics.get_stats()['total_logs'] > 0
