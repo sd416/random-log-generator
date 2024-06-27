@@ -1,6 +1,7 @@
 import pytest
 import time
-from log_generator import generate_log_line, write_logs, write_logs_random_rate, write_logs_random_segments, main, generate_random_user_agent, generate_ip_address
+import ipaddress
+from log_generator import generate_log_line, write_logs, write_logs_random_rate, write_logs_random_segments, main, generate_random_user_agent, generate_ip_address, Metrics
 
 # Override the configurations for testing
 test_config = {
@@ -20,6 +21,8 @@ test_config = {
     'custom_app_names': ['App1', 'App2', 'App3'],
     'custom_log_format': "{timestamp} {log_level} {ip_address} {user_agent} {message}"
 }
+
+metrics = Metrics()
 
 def test_generate_log_line():
     print("Testing generate_log_line")
