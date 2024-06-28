@@ -23,7 +23,7 @@ test_config = {
     'http_format_logs': False,
     'stop_after_seconds': 21,
     'custom_app_names': ['App1', 'App2', 'App3'],
-    'custom_log_format': "{timestamp} {log_level} {ip_address} {user_agent} {message}"
+    'custom_log_format': "{timestamp} {log_level} {message}"
 }
 
 
