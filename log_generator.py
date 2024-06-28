@@ -24,7 +24,7 @@ CONFIG = {
     'rate_change_max_percentage': 0.1,
     'write_to_file': True,
     'log_file_path': 'logs2.txt',
-    'http_format_logs': False,
+    'http_format_logs': True,
     'stop_after_seconds': -1,
     'custom_app_names': [],
     'custom_log_format': "{timestamp}, {log_level}, {message}"
