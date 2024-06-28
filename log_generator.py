@@ -23,8 +23,8 @@ CONFIG = {
     'rate_change_probability': 0.1,
     'rate_change_max_percentage': 0.1,
     'write_to_file': True,
-    'log_file_path': 'logs.txt',
-    'http_format_logs': True,
+    'log_file_path': 'logs2.txt',
+    'http_format_logs': False,
     'stop_after_seconds': -1,
     'custom_app_names': [],
     'custom_log_format': "{timestamp}, {log_level}, {message}"
@@ -151,7 +151,7 @@ def generate_ip_address():
 
 def generate_log_line(http_format_logs=CONFIG['http_format_logs'], custom_app_names=CONFIG['custom_app_names'], custom_format=CONFIG['custom_log_format']):
     """Generate a single log line with a timestamp and realistic message."""
-    timestamp = f"{datetime.datetime.utcnow().isoformat()}Z"
+    timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
     log_level = random.choice(log_levels)
 
     if http_format_logs:
