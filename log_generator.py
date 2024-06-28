@@ -2,7 +2,6 @@ import random
 import time
 import datetime
 import ipaddress
-import statistics
 import threading
 
 # Default configuration values
@@ -25,30 +24,6 @@ CONFIG = {
 }
 
 log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR']
-log_messages = [
-    'User login successful', 'User login failed', 'Data fetched successfully', 'Error fetching data from database',
-    'User logged out', 'Unexpected error occurred', 'Service started', 'Service stopped', 'Configuration updated',
-    'Permission denied', 'File not found', 'Connection timeout', 'Data processed successfully', 'Invalid user input detected',
-    'Resource allocation failure', 'Disk space running low', 'Database connection established', 'Database connection lost',
-    'Cache cleared', 'Cache update failed', 'Scheduled task started', 'Scheduled task completed', 'Backup completed successfully',
-    'Backup failed', 'User session expired', 'Session token refreshed', 'New user registered', 'Password change requested',
-    'Password change successful', 'Password change failed', 'API request received', 'API response sent', 'Service health check passed',
-    'Service health check failed', 'Application deployment started', 'Application deployment completed', 'Application rollback initiated',
-    'Application rollback completed', 'Configuration validation error', 'File uploaded successfully', 'File upload failed',
-    'User profile updated', 'User profile update failed', 'Email sent successfully', 'Email delivery failed', 'SMS sent successfully',
-    'SMS delivery failed', 'Payment transaction completed', 'Payment transaction failed', 'Credit card validation error',
-    'User account locked', 'User account unlocked', 'System reboot initiated', 'System reboot completed', 'Malware detected',
-    'Malware removal successful', 'Unauthorized access attempt detected', 'Service degraded', 'Service restored',
-    'High memory usage detected', 'Memory leak detected', 'Application error report generated', 'Bug report submitted',
-    'Feature request submitted', 'Feature request approved', 'System update available', 'System update completed',
-    'Firmware upgrade initiated', 'Firmware upgrade completed', 'User subscription created', 'User subscription cancelled',
-    'Trial period started', 'Trial period ended', 'License key generated', 'License key expired', 'Database migration started',
-    'Database migration completed', 'System performance optimized', 'Debugging session started', 'Debugging session ended',
-    'Service rate limit exceeded', 'Service quota exceeded', 'File download started', 'File download completed',
-    'Cloud resource provisioned', 'Cloud resource deprovisioned', 'API key generated', 'API key revoked', 'System backup scheduled',
-    'System backup cancelled', 'Encryption key rotation started', 'Encryption key rotation completed', 'Security audit started',
-    'Security audit completed', 'User role updated', 'User role update failed', 'Service endpoint deprecated', 'Service endpoint removed'
-]
 
 http_status_codes = {
     '200 OK': [
@@ -161,7 +136,6 @@ def generate_log_line(http_format_logs=CONFIG['http_format_logs'], custom_app_na
     """Generate a single log line with a timestamp and realistic message."""
     timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
     log_level = random.choice(log_levels)
-    message = random.choice(log_messages)
     ip_address = generate_ip_address()
     user_agent = generate_random_user_agent()
 
@@ -170,12 +144,12 @@ def generate_log_line(http_format_logs=CONFIG['http_format_logs'], custom_app_na
         message = f"{app_name}: {message}"
 
     if http_format_logs:
-        for status_code, messages in http_status_codes.items():
-            if message in messages:
-                return f"{timestamp} {log_level} {ip_address} - \"{user_agent}\" HTTP/1.1 {status_code} {message}"
         status_code = random.choice(list(http_status_codes.keys()))
+        message = random.choice(http_status_codes[status_code])
         return f"{timestamp} {log_level} {ip_address} - \"{user_agent}\" HTTP/1.1 {status_code} {message}"
     else:
+        status_code = random.choice(list(http_status_codes.keys()))
+        message = random.choice(http_status_codes[status_code])
         return custom_format.format(
             timestamp=timestamp,
             log_level=log_level,
