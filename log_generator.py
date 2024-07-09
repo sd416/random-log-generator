@@ -24,6 +24,8 @@ CONFIG = {
     'rate_change_max_percentage': 0.1,
     'write_to_file': True,
     'log_file_path': 'logs2.txt',
+    'log_rotation_enabled': True,
+    'log_rotation_size': 5,  # size in MB
     'http_format_logs': True,
     'stop_after_seconds': -1,
     'custom_app_names': [],
@@ -183,6 +185,15 @@ def generate_log_line(http_format_logs=CONFIG['http_format_logs'], custom_app_na
             logging.error(f"Error formatting log line: {e}. Using default format.")
             return f"{timestamp}, {log_level}, {message}"
 
+def rotate_log_file(log_file_path):
+    """Rotate the log file by renaming the current log file and creating a new one."""
+    base, ext = os.path.splitext(log_file_path)
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    rotated_log_file_path = f"{base}_{timestamp}{ext}"
+    os.rename(log_file_path, rotated_log_file_path)
+    logging.info(f"Rotated log file to: {rotated_log_file_path}")
+    return open(log_file_path, 'w')
+
 def write_logs(rate, duration, log_file=None, http_format_logs=CONFIG['http_format_logs'], custom_app_names=CONFIG['custom_app_names'], custom_format=CONFIG['custom_log_format'], metrics=None):
     """Write logs at a specified rate for a given duration using the token bucket algorithm."""
     logging.info(f"Writing logs at rate: {rate:.4f} MB/s for {duration:.2f} seconds")
@@ -196,6 +207,9 @@ def write_logs(rate, duration, log_file=None, http_format_logs=CONFIG['http_form
             log_line = generate_log_line(http_format_logs, custom_app_names, custom_format)
             try:
                 if log_file:
+                    if CONFIG['log_rotation_enabled'] and log_file.tell() >= CONFIG['log_rotation_size'] * 1024 * 1024:
+                        log_file.close()
+                        log_file = rotate_log_file(CONFIG['log_file_path'])
                     log_file.write(f"{log_line}\n")
                 else:
                     print(log_line)
@@ -208,6 +222,8 @@ def write_logs(rate, duration, log_file=None, http_format_logs=CONFIG['http_form
 
     if metrics:
         metrics.update(logs_written, bytes_written)
+
+    return log_file
 
 def write_logs_random_rate(duration, rate_min, rate_max, log_file=None, http_format_logs=CONFIG['http_format_logs'], custom_app_names=CONFIG['custom_app_names'], custom_format=CONFIG['custom_log_format'], metrics=None):
     """Write logs at a random rate between rate_min and rate_max for a given duration using the token bucket algorithm."""
@@ -223,8 +239,10 @@ def write_logs_random_rate(duration, rate_min, rate_max, log_file=None, http_for
         segment_duration = random.uniform(1, remaining_time)
         rate = random.uniform(rate_min, rate_max)
         logging.info(f"Selected random rate: {rate:.4f} MB/s")
-        write_logs(rate, segment_duration, log_file, http_format_logs, custom_app_names, custom_format, metrics)
+        log_file = write_logs(rate, segment_duration, log_file, http_format_logs, custom_app_names, custom_format, metrics)
         remaining_time -= segment_duration
+
+    return log_file
 
 def write_logs_random_segments(total_duration, segment_max_duration, rate_min, rate_max, base_exit_probability, log_file=None, http_format_logs=CONFIG['http_format_logs'], custom_app_names=CONFIG['custom_app_names'], custom_format=CONFIG['custom_log_format'], metrics=None):
     """Write logs in random segments with a chance to exit early using the token bucket algorithm."""
@@ -233,10 +251,12 @@ def write_logs_random_segments(total_duration, segment_max_duration, rate_min, r
         exit_probability = base_exit_probability * random.uniform(0.5, 1.5)  # Add variability to the exit probability
         if random.random() < exit_probability:
             logging.info("Exiting early based on random exit clause.")
-            return
+            return log_file
         segment_duration = random.uniform(1, min(segment_max_duration, remaining_time))
-        write_logs_random_rate(segment_duration, rate_min, rate_max, log_file, http_format_logs, custom_app_names, custom_format, metrics)
+        log_file = write_logs_random_rate(segment_duration, rate_min, rate_max, log_file, http_format_logs, custom_app_names, custom_format, metrics)
         remaining_time -= segment_duration
+
+    return log_file
 
 def main(config, metrics_instance=None):
     """Main function to initiate log writing based on configuration."""
@@ -256,17 +276,19 @@ def main(config, metrics_instance=None):
     signal.signal(signal.SIGTERM, handle_interrupt)
 
     if config['write_to_file']:
+        log_file = open(config['log_file_path'], 'w')
         try:
-            with open(config['log_file_path'], 'w') as log_file:
-                while config['stop_after_seconds'] == -1 or time.time() - start_time < config['stop_after_seconds']:
-                    write_logs_random_segments(config['duration_normal'], 5, config['rate_normal_min'], config['rate_normal_max'], config['base_exit_probability'], log_file, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'], metrics_instance)
-                    write_logs_random_rate(config['duration_peak'], config['rate_normal_max'], config['rate_peak'], log_file, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'], metrics_instance)
+            while config['stop_after_seconds'] == -1 or time.time() - start_time < config['stop_after_seconds']:
+                log_file = write_logs_random_segments(config['duration_normal'], 5, config['rate_normal_min'], config['rate_normal_max'], config['base_exit_probability'], log_file, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'], metrics_instance)
+                log_file = write_logs_random_rate(config['duration_peak'], config['rate_normal_max'], config['rate_peak'], log_file, config['http_format_logs'], config['custom_app_names'], config['custom_log_format'], metrics_instance)
 
-                    iteration += 1
-                    logging.info(f"Iteration {iteration} metrics: {metrics_instance.get_stats()}")
+                iteration += 1
+                logging.info(f"Iteration {iteration} metrics: {metrics_instance.get_stats()}")
         except (IOError, OSError) as e:
             logging.error(f"Error opening or writing to file: {e}")
         finally:
+            if log_file and not log_file.closed:
+                log_file.close()
             logging.info(f"Final metrics: {metrics_instance.get_stats()}")
     else:
         try:
