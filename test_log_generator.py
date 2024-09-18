@@ -3,6 +3,7 @@ import ipaddress
 import random
 import tempfile
 import os
+import yaml
 from log_generator import (
     generate_log_line, write_logs, write_logs_random_rate,
     write_logs_random_segments, main, generate_random_user_agent,
