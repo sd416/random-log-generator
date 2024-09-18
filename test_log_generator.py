@@ -13,9 +13,9 @@ from log_generator import (
 test_config = {
     'duration_normal': 5,
     'duration_peak': 2,
-    'rate_normal_min': 0.0001,
-    'rate_normal_max': 0.001,
-    'rate_peak': 0.002,
+    'rate_normal_min': 0.1,     # Increased rates
+    'rate_normal_max': 0.5,
+    'rate_peak': 1.0,
     'log_line_size': 100,
     'base_exit_probability': 0.1,
     'rate_change_probability': 0.2,
@@ -27,13 +27,14 @@ test_config = {
     'http_format_logs': False,
     'stop_after_seconds': 10,
     'custom_app_names': ['TestApp1', 'TestApp2'],
-    'custom_log_format': "{timestamp} {log_level} {message}"
+    'custom_log_format': "${timestamp} ${log_level} ${message}"
 }
 
 def test_generate_log_line():
     log_line = generate_log_line(
         http_format_logs=test_config['http_format_logs'],
-        custom_app_names=test_config['custom_app_names']
+        custom_app_names=test_config['custom_app_names'],
+        custom_log_format=test_config['custom_log_format']
     )
     assert isinstance(log_line, str)
     assert len(log_line) > 0
@@ -59,7 +60,9 @@ def test_write_logs():
             write_logs(
                 test_config['rate_normal_min'], test_config['duration_normal'],
                 log_file, http_format_logs=test_config['http_format_logs'],
-                custom_app_names=test_config['custom_app_names'], metrics=metrics_instance
+                custom_app_names=test_config['custom_app_names'],
+                custom_log_format=test_config['custom_log_format'],
+                metrics=metrics_instance
             )
         assert os.path.getsize(log_file_path) > 0
         print(f"Logs written to {log_file_path}")
@@ -72,7 +75,9 @@ def test_write_logs_random_rate():
             write_logs_random_rate(
                 test_config['duration_peak'], test_config['rate_normal_min'],
                 test_config['rate_normal_max'], log_file, http_format_logs=test_config['http_format_logs'],
-                custom_app_names=test_config['custom_app_names'], metrics=metrics_instance
+                custom_app_names=test_config['custom_app_names'],
+                custom_log_format=test_config['custom_log_format'],
+                metrics=metrics_instance
             )
         assert os.path.getsize(log_file_path) > 0
         print(f"Random rate logs written to {log_file_path}")
@@ -86,7 +91,9 @@ def test_write_logs_random_segments():
                 test_config['duration_normal'], 1, test_config['rate_normal_min'],
                 test_config['rate_normal_max'], test_config['base_exit_probability'],
                 log_file, http_format_logs=test_config['http_format_logs'],
-                custom_app_names=test_config['custom_app_names'], metrics=metrics_instance
+                custom_app_names=test_config['custom_app_names'],
+                custom_log_format=test_config['custom_log_format'],
+                metrics=metrics_instance
             )
         assert os.path.getsize(log_file_path) > 0
         print(f"Random segment logs written to {log_file_path}")
@@ -122,6 +129,7 @@ def test_exit_early():
                 test_config['duration_normal'], 1, test_config['rate_normal_min'],
                 test_config['rate_normal_max'], test_config['base_exit_probability'],
                 log_file, test_config['http_format_logs'], test_config['custom_app_names'],
+                test_config['custom_log_format'],
                 metrics=metrics_instance
             )
         assert os.path.getsize(log_file_path) == 0
