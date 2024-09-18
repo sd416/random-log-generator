@@ -1,0 +1,151 @@
+# Configuration parameters for the log generator
+CONFIG:
+  duration_normal: 10        # Duration of normal log generation periods in seconds
+  duration_peak: 2           # Duration of peak log generation periods in seconds
+  rate_normal_min: 0.0001    # Minimum log generation rate during normal periods (MB/s)
+  rate_normal_max: 0.1    # Maximum log generation rate during normal periods (MB/s)
+  rate_peak: 0.500           # Log generation rate during peak periods (MB/s)
+  log_line_size: 100         # Approximate size of each log line in bytes
+  base_exit_probability: 0.05   # Base probability to exit early from a log generation segment
+  rate_change_probability: 0.1  # Probability to change the rate_max during random rate generation
+  rate_change_max_percentage: 0.1  # Max percentage change when rate_max is altered
+  write_to_file: true        # If true, logs will be written to a file; if false, logs will be printed to stdout
+  log_file_path: 'logs.txt' # Path to the log file
+  log_rotation_enabled: true # If true, log rotation is enabled
+  log_rotation_size: 50       # Size threshold for log rotation in MB
+  http_format_logs: true     # If true, logs will be in HTTP log format
+  stop_after_seconds: 20     # If -1, the script runs indefinitely; else, stops after specified seconds
+  custom_app_names: []       # List of custom application names to include in logs
+  custom_log_format: "${timestamp}, ${log_level}, ${message}"  # Custom format string for logs
+  logging_level: 'INFO'      # Logging level for the script ('DEBUG', 'INFO', 'WARNING', 'ERROR')
+
+
+# Log levels to use in the logs
+log_levels:
+  - DEBUG
+  - INFO
+  - WARNING
+  - ERROR
+
+# HTTP status codes and corresponding messages
+http_status_codes:
+  '200 OK':
+    - 'API request received'
+    - 'API response sent'
+    - 'Application deployment completed'
+    - 'Application deployment started'
+    - 'Application rollback completed'
+    - 'Application rollback initiated'
+    - 'Backup completed successfully'
+    - 'Cache cleared'
+    - 'Configuration updated'
+    - 'Database connection established'
+    - 'Data fetched successfully'
+    - 'Data processed successfully'
+    - 'Email sent successfully'
+    - 'File uploaded successfully'
+    - 'New user registered'
+    - 'Password change requested'
+    - 'Password change successful'
+    - 'Payment transaction completed'
+    - 'Scheduled task completed'
+    - 'Scheduled task started'
+    - 'Service health check passed'
+    - 'Service started'
+    - 'Service stopped'
+    - 'Session token refreshed'
+    - 'SMS sent successfully'
+    - 'User account unlocked'
+    - 'User login successful'
+    - 'User logged out'
+    - 'User profile updated'
+    - 'System reboot initiated'
+    - 'System reboot completed'
+    - 'Malware removal successful'
+    - 'Service restored'
+    - 'Application error report generated'
+    - 'Bug report submitted'
+    - 'Feature request submitted'
+    - 'Feature request approved'
+    - 'System update available'
+    - 'System update completed'
+    - 'Firmware upgrade initiated'
+    - 'Firmware upgrade completed'
+    - 'User subscription created'
+    - 'Trial period started'
+    - 'Database migration started'
+    - 'Database migration completed'
+    - 'System performance optimized'
+    - 'Debugging session started'
+    - 'Debugging session ended'
+    - 'File download started'
+    - 'File download completed'
+    - 'Cloud resource provisioned'
+    - 'API key generated'
+    - 'System backup scheduled'
+    - 'Encryption key rotation started'
+    - 'Encryption key rotation completed'
+    - 'Security audit started'
+    - 'Security audit completed'
+    - 'User role updated'
+  '400 Bad Request':
+    - 'Invalid user input detected'
+    - 'Configuration validation error'
+    - 'Credit card validation error'
+    - 'License key expired'
+    - 'Service rate limit exceeded'
+    - 'Service quota exceeded'
+  '401 Unauthorized':
+    - 'User login failed'
+    - 'Permission denied'
+    - 'Unauthorized access attempt detected'
+  '403 Forbidden':
+    - 'Permission denied'
+  '404 Not Found':
+    - 'File not found'
+    - 'Service endpoint deprecated'
+    - 'Service endpoint removed'
+  '500 Internal Server Error':
+    - 'Error fetching data from database'
+    - 'Unexpected error occurred'
+    - 'Resource allocation failure'
+    - 'Database connection lost'
+    - 'Cache update failed'
+    - 'Backup failed'
+    - 'Password change failed'
+    - 'Service health check failed'
+    - 'File upload failed'
+    - 'User profile update failed'
+    - 'Email delivery failed'
+    - 'SMS delivery failed'
+    - 'Payment transaction failed'
+    - 'User account locked'
+    - 'Service degraded'
+    - 'High memory usage detected'
+    - 'Memory leak detected'
+    - 'System backup cancelled'
+    - 'User subscription cancelled'
+    - 'Trial period ended'
+    - 'Database migration started'
+    - 'Database migration completed'
+    - 'Cloud resource deprovisioned'
+    - 'API key revoked'
+    - 'User role update failed'
+
+# User agent browsers for generating user agents
+user_agent_browsers:
+  - 'Chrome'
+  - 'Firefox'
+  - 'Safari'
+  - 'Edge'
+  - 'Opera'
+
+# User agent systems for generating user agents
+user_agent_systems:
+  - 'Windows NT 10.0; Win64; x64'
+  - 'Macintosh; Intel Mac OS X 10_15_7'
+  - 'iPhone; CPU iPhone OS 14_6 like Mac OS X'
+  - 'X11; Linux x86_64'
+  - 'Linux; Android 10'
+  - 'iPad; CPU OS 14_6 like Mac OS X'
+  - 'Macintosh; Intel Mac OS X 11_2_3'
