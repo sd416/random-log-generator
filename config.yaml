@@ -88,6 +88,9 @@ http_status_codes:
     - 'Security audit started'
     - 'Security audit completed'
     - 'User role updated'
+    - 'Load balancer updated'
+    - 'DNS record updated'
+    - 'SSL certificate renewed'
   '400 Bad Request':
     - 'Invalid user input detected'
     - 'Configuration validation error'
@@ -95,16 +98,25 @@ http_status_codes:
     - 'License key expired'
     - 'Service rate limit exceeded'
     - 'Service quota exceeded'
+    - 'Request body too large'
+    - 'Invalid request header'
+    - 'Missing required parameter'
   '401 Unauthorized':
     - 'User login failed'
     - 'Permission denied'
     - 'Unauthorized access attempt detected'
+    - 'Invalid authentication token'
+    - 'Authentication token expired'
   '403 Forbidden':
     - 'Permission denied'
+    - 'Access to resource forbidden'
+    - 'Account suspended'
   '404 Not Found':
     - 'File not found'
     - 'Service endpoint deprecated'
     - 'Service endpoint removed'
+    - 'Resource not found'
+    - 'User not found'
   '500 Internal Server Error':
     - 'Error fetching data from database'
     - 'Unexpected error occurred'
@@ -131,6 +143,12 @@ http_status_codes:
     - 'Cloud resource deprovisioned'
     - 'API key revoked'
     - 'User role update failed'
+    - 'Service unavailable'
+    - 'Timeout error'
+  '503 Service Unavailable':
+    - 'Service temporarily unavailable'
+    - 'Maintenance in progress'
+    - 'Server overloaded'
 
 # User agent browsers for generating user agents
 user_agent_browsers:
@@ -139,13 +157,20 @@ user_agent_browsers:
   - 'Safari'
   - 'Edge'
   - 'Opera'
+  - 'Brave'
 
 # User agent systems for generating user agents
 user_agent_systems:
   - 'Windows NT 10.0; Win64; x64'
-  - 'Macintosh; Intel Mac OS X 10_15_7'
-  - 'iPhone; CPU iPhone OS 14_6 like Mac OS X'
+  - 'Macintosh; Intel Mac OS X 13_4' 
+  - 'iPhone; CPU iPhone OS 16_5 like Mac OS X'
   - 'X11; Linux x86_64'
-  - 'Linux; Android 10'
-  - 'iPad; CPU OS 14_6 like Mac OS X'
-  - 'Macintosh; Intel Mac OS X 11_2_3'
+  - 'Linux; Android 13; K'
+  - 'iPad; CPU OS 16_5 like Mac OS X'
+  - 'Macintosh; Intel Mac OS X 13_4_1'
+  - 'Windows NT 10.0; WOW64'
+  - 'X11; Ubuntu; Linux i686'
+  - 'Macintosh; Intel Mac OS X 10_15_7'
+  - 'Linux; Android 13; SM-S918B'
+  - 'Linux; Android 14; Pixel 7'
+  - 'ChromeOS; x86_64 15183.78.0'
