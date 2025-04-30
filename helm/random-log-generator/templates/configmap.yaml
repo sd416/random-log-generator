@@ -6,19 +6,29 @@ metadata:
     {{- include "random-log-generator.labels" . | nindent 4 }}
 data:
   config.yaml: |
-    log_rate: {{ .Values.config.logRate }}
+    # Configuration parameters for the log generator
+    CONFIG:
+      duration_normal: {{ .Values.config.durationNormal }}
+      duration_peak: {{ .Values.config.durationPeak }}
+      rate_normal_min: {{ .Values.config.rateNormalMin }}
+      rate_normal_max: {{ .Values.config.rateNormalMax }}
+      rate_peak: {{ .Values.config.ratePeak }}
+      log_line_size: {{ .Values.config.logLineSize }}
+      base_exit_probability: {{ .Values.config.baseExitProbability }}
+      rate_change_probability: {{ .Values.config.rateChangeProbability }}
+      rate_change_max_percentage: {{ .Values.config.rateChangeMaxPercentage }}
+      write_to_file: {{ .Values.config.writeToFile }}
+      log_file_path: {{ .Values.config.outputPath | quote }}
+      log_rotation_enabled: {{ .Values.config.rotationEnabled }}
+      log_rotation_size: {{ .Values.config.rotationSize }}
+      http_format_logs: {{ eq .Values.config.format "http" }}
+      stop_after_seconds: {{ .Values.config.stopAfterSeconds }}
+      custom_app_names: [{{ .Values.config.customAppNames | join ", " }}]
+      custom_log_format: {{ .Values.config.customFormat | quote }}
+      logging_level: {{ .Values.config.loggingLevel | quote }}
+
+    # Log levels to use in the logs
     log_levels:
       {{- range .Values.config.logLevels }}
       - {{ . }}
-      {{- end }}
-    output:
-      type: {{ .Values.config.outputType }}
-      path: {{ .Values.config.outputPath }}
-      rotation:
-        size: {{ .Values.config.rotationSize }}
-        count: {{ .Values.config.rotationCount }}
-    format:
-      type: {{ .Values.config.format }}
-      {{- if eq .Values.config.format "custom" }}
-      custom_format: {{ .Values.config.customFormat }}
       {{- end }}

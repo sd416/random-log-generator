@@ -30,19 +30,40 @@ jobs:
       - name: Test Docker image
         run: |
           docker run --rm random-log-generator:test --version
-          # Create a test config file
-          echo "log_rate: 5" > test-config.yaml
-          echo "log_levels:" >> test-config.yaml
-          echo "  - INFO" >> test-config.yaml
-          echo "  - ERROR" >> test-config.yaml
-          echo "output:" >> test-config.yaml
-          echo "  type: console" >> test-config.yaml
-          echo "  path: /app/logs/test.log" >> test-config.yaml
-          echo "format:" >> test-config.yaml
-          echo "  type: http" >> test-config.yaml
+          
+          # Create a complete test config file
+          cat > test-config.yaml << EOF
+          # Configuration parameters for the log generator
+          CONFIG:
+            duration_normal: 10
+            duration_peak: 2
+            rate_normal_min: 0.0001
+            rate_normal_max: 0.1
+            rate_peak: 0.500
+            log_line_size: 100
+            base_exit_probability: 0.05
+            rate_change_probability: 0.1
+            rate_change_max_percentage: 0.1
+            write_to_file: false
+            log_file_path: '/app/logs/test.log'
+            log_rotation_enabled: true
+            log_rotation_size: 50
+            http_format_logs: true
+            stop_after_seconds: 3
+            custom_app_names: []
+            custom_log_format: "\${timestamp}, \${log_level}, \${message}"
+            logging_level: 'INFO'
+
+          # Log levels to use in the logs
+          log_levels:
+            - DEBUG
+            - INFO
+            - WARNING
+            - ERROR
+          EOF
           
           # Run the container with the test config for a short time
-          timeout 5s docker run --rm -v $(pwd)/test-config.yaml:/app/config.yaml random-log-generator:test --config config.yaml || code=$?
+          timeout 10s docker run --rm -v $(pwd)/test-config.yaml:/app/config.yaml random-log-generator:test --config config.yaml || code=$?
           if [ $code -eq 124 ]; then
             echo "Container ran successfully and was terminated after timeout"
             exit 0
