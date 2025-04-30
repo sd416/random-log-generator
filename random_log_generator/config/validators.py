@@ -1,0 +1,163 @@
+"""
+Configuration validators module for Random Log Generator.
+
+This module provides functions for validating configuration values.
+"""
+
+import logging
+
+
+# Required configuration keys
+REQUIRED_CONFIG_KEYS = [
+    'duration_normal',
+    'duration_peak',
+    'rate_normal_min',
+    'rate_normal_max',
+    'rate_peak',
+    'log_line_size',
+    'base_exit_probability',
+    'rate_change_probability',
+    'rate_change_max_percentage',
+    'write_to_file',
+    'log_file_path',
+    'log_rotation_enabled',
+    'log_rotation_size',
+    'http_format_logs',
+    'stop_after_seconds',
+    'custom_app_names',
+    'custom_log_format'
+]
+
+
+def validate_config(config):
+    """
+    Validate the configuration dictionary.
+    
+    Args:
+        config (dict): Configuration dictionary to validate.
+        
+    Raises:
+        ValueError: If a required configuration key is missing or a value is invalid.
+    """
+    # Check for required keys
+    for key in REQUIRED_CONFIG_KEYS:
+        if key not in config:
+            error_msg = f"Missing required configuration parameter: {key}"
+            logging.error(error_msg)
+            raise ValueError(error_msg)
+    
+    # Validate numeric values
+    validate_numeric(config, 'duration_normal', min_value=0)
+    validate_numeric(config, 'duration_peak', min_value=0)
+    validate_numeric(config, 'rate_normal_min', min_value=0)
+    validate_numeric(config, 'rate_normal_max', min_value=0)
+    validate_numeric(config, 'rate_peak', min_value=0)
+    validate_numeric(config, 'log_line_size', min_value=1)
+    validate_numeric(config, 'base_exit_probability', min_value=0, max_value=1)
+    validate_numeric(config, 'rate_change_probability', min_value=0, max_value=1)
+    validate_numeric(config, 'rate_change_max_percentage', min_value=0)
+    validate_numeric(config, 'log_rotation_size', min_value=0)
+    
+    # Validate that rate_normal_min <= rate_normal_max
+    if config['rate_normal_min'] > config['rate_normal_max']:
+        error_msg = f"rate_normal_min ({config['rate_normal_min']}) must be less than or equal to rate_normal_max ({config['rate_normal_max']})"
+        logging.error(error_msg)
+        raise ValueError(error_msg)
+    
+    # Validate boolean values
+    validate_boolean(config, 'write_to_file')
+    validate_boolean(config, 'log_rotation_enabled')
+    validate_boolean(config, 'http_format_logs')
+    
+    # Validate string values
+    validate_string(config, 'log_file_path')
+    validate_string(config, 'custom_log_format')
+    
+    # Validate list values
+    validate_list(config, 'custom_app_names')
+    
+    logging.info("Configuration validation successful")
+
+
+def validate_numeric(config, key, min_value=None, max_value=None):
+    """
+    Validate that a configuration value is numeric and within the specified range.
+    
+    Args:
+        config (dict): Configuration dictionary.
+        key (str): Key to validate.
+        min_value (float, optional): Minimum allowed value.
+        max_value (float, optional): Maximum allowed value.
+        
+    Raises:
+        ValueError: If the value is not numeric or outside the specified range.
+    """
+    value = config[key]
+    if not isinstance(value, (int, float)):
+        error_msg = f"Configuration parameter '{key}' must be numeric, got {type(value).__name__}"
+        logging.error(error_msg)
+        raise ValueError(error_msg)
+    
+    if min_value is not None and value < min_value:
+        error_msg = f"Configuration parameter '{key}' must be at least {min_value}, got {value}"
+        logging.error(error_msg)
+        raise ValueError(error_msg)
+    
+    if max_value is not None and value > max_value:
+        error_msg = f"Configuration parameter '{key}' must be at most {max_value}, got {value}"
+        logging.error(error_msg)
+        raise ValueError(error_msg)
+
+
+def validate_boolean(config, key):
+    """
+    Validate that a configuration value is a boolean.
+    
+    Args:
+        config (dict): Configuration dictionary.
+        key (str): Key to validate.
+        
+    Raises:
+        ValueError: If the value is not a boolean.
+    """
+    value = config[key]
+    if not isinstance(value, bool):
+        error_msg = f"Configuration parameter '{key}' must be a boolean, got {type(value).__name__}"
+        logging.error(error_msg)
+        raise ValueError(error_msg)
+
+
+def validate_string(config, key):
+    """
+    Validate that a configuration value is a string.
+    
+    Args:
+        config (dict): Configuration dictionary.
+        key (str): Key to validate.
+        
+    Raises:
+        ValueError: If the value is not a string.
+    """
+    value = config[key]
+    if not isinstance(value, str):
+        error_msg = f"Configuration parameter '{key}' must be a string, got {type(value).__name__}"
+        logging.error(error_msg)
+        raise ValueError(error_msg)
+
+
+def validate_list(config, key):
+    """
+    Validate that a configuration value is a list.
+    
+    Args:
+        config (dict): Configuration dictionary.
+        key (str): Key to validate.
+        
+    Raises:
+        ValueError: If the value is not a list.
+    """
+    value = config[key]
+    if not isinstance(value, list):
+        error_msg = f"Configuration parameter '{key}' must be a list, got {type(value).__name__}"
+        logging.error(error_msg)
+        raise ValueError(error_msg)

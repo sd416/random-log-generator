@@ -1,0 +1,222 @@
+name: Docker and Helm CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      
+      - name: Run tests
+        run: |
+          python -m unittest test_log_generator.py
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.10.0
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6.16.0
+        with:
+          context: .
+          push: false
+          load: true
+          tags: random-log-generator:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker image
+        run: |
+          docker run --rm random-log-generator:test --version
+          
+          # Create a complete test config file
+          cat > test-config.yaml << EOF
+          # Configuration parameters for the log generator
+          CONFIG:
+            duration_normal: 10
+            duration_peak: 2
+            rate_normal_min: 0.0001
+            rate_normal_max: 0.1
+            rate_peak: 0.500
+            log_line_size: 100
+            base_exit_probability: 0.05
+            rate_change_probability: 0.1
+            rate_change_max_percentage: 0.1
+            write_to_file: false
+            log_file_path: '/app/logs/test.log'
+            log_rotation_enabled: true
+            log_rotation_size: 50
+            http_format_logs: true
+            stop_after_seconds: 3
+            custom_app_names: []
+            custom_log_format: "\${timestamp}, \${log_level}, \${message}"
+            logging_level: 'INFO'
+
+          # Log levels to use in the logs
+          log_levels:
+            - DEBUG
+            - INFO
+            - WARNING
+            - ERROR
+          EOF
+          
+          # Run the container with the test config for a short time
+          timeout 10s docker run --rm -v $(pwd)/test-config.yaml:/app/config.yaml random-log-generator:test --config config.yaml || code=$?
+          
+          # Check if code is set (container exited with non-zero) and if it's the timeout code (124)
+          if [ -z "${code:-}" ]; then
+            echo "Container exited normally before timeout"
+            exit 0
+          elif [ "${code:-}" = "124" ]; then
+            echo "Container ran successfully and was terminated after timeout"
+            exit 0
+          else
+            echo "Container exited with unexpected code: ${code:-unknown}"
+            exit 1
+          fi
+
+  helm-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4.3.0
+        with:
+          version: 'v3.17.0'
+
+      - name: Lint Helm chart
+        run: |
+          helm lint ./helm/random-log-generator
+
+  helm-test:
+    runs-on: ubuntu-latest
+    needs: [docker-build, helm-lint]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.10.0
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6.16.0
+        with:
+          context: .
+          push: false
+          load: true
+          tags: random-log-generator:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4.3.0
+        with:
+          version: 'v3.17.0'
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.12.0
+        with:
+          cluster_name: kind-test
+
+      - name: Load Docker image into kind
+        run: |
+          # Load the image into kind
+          echo "Loading image into kind cluster..."
+          kind load docker-image random-log-generator:test --name kind-test
+          
+          # Verify the image is loaded
+          echo "Verifying image is loaded in kind cluster..."
+          docker exec kind-test-control-plane crictl images | grep random-log-generator
+
+      - name: Install Helm chart
+        run: |
+          # Create a temporary values file that overrides the image settings
+          cat > custom-values.yaml << EOF
+          image:
+            repository: random-log-generator
+            tag: test
+            # Use "Never" to ensure kind uses the locally loaded image
+            pullPolicy: Never
+          EOF
+          
+          # Print the custom values file for debugging
+          echo "Custom values file content:"
+          cat custom-values.yaml
+          
+          # Print the Helm chart values for debugging
+          echo "Helm chart values.yaml content:"
+          cat ./helm/random-log-generator/values.yaml
+          
+          # Install the chart with custom values
+          echo "Installing Helm chart with custom values..."
+          helm install test-release ./helm/random-log-generator --values custom-values.yaml --debug
+          
+          # Show all resources
+          echo "All resources after installation:"
+          kubectl get all
+          
+          # Show ConfigMap
+          echo "ConfigMap content:"
+          kubectl get configmap test-release-random-log-generator-config -o yaml
+          
+          # Get pod name without waiting for ready state
+          POD_NAME=$(kubectl get pods -l app.kubernetes.io/name=random-log-generator -o jsonpath="{.items[0].metadata.name}")
+          echo "Pod name: $POD_NAME"
+          
+          # Check pod status
+          echo "Pod status:"
+          kubectl describe pod $POD_NAME
+          
+          # Try to get logs even if pod is not ready
+          echo "Pod logs (if available):"
+          kubectl logs $POD_NAME --previous || echo "No previous logs"
+          kubectl logs $POD_NAME || echo "No logs available"
+          
+          # Wait for the pod to be ready with increased timeout
+          echo "Waiting for pod to be ready (with increased timeout)..."
+          kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=random-log-generator --timeout=120s || {
+            echo "Pod did not become ready in time. Current status:"
+            kubectl get pods
+            echo "Pod events:"
+            kubectl describe pod $POD_NAME | grep -A 20 Events:
+            echo "Container logs (if available):"
+            kubectl logs $POD_NAME --all-containers || echo "No logs available"
+            exit 1
+          }
+          
+          # If we get here, the pod is ready
+          echo "Pod is ready!"
+          
+          # Check pod logs to verify it's running
+          kubectl logs $POD_NAME
+          
+          # Clean up
+          helm delete test-release
