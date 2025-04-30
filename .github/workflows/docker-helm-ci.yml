@@ -110,7 +110,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4.3.0
         with:
-          version: 'v4.3.0'
+          version: 'v3.17.0'
 
       - name: Lint Helm chart
         run: |
@@ -139,7 +139,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4.3.0
         with:
-          version: 'v4.3.0'
+          version: 'v3.17.0'
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.12.0
