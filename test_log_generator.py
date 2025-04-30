@@ -309,7 +309,7 @@ class TestLogGenerator(unittest.TestCase):
         formatter = HTTPFormatter(mock_http_status_codes)
         
         # Format a log line
-        timestamp = "2023-01-01T12:00:00Z"
+        timestamp = "2025-01-01T12:00:00Z"
         log_level = "INFO"
         log_line = formatter.format_log(timestamp, log_level)
         

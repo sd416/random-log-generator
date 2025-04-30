@@ -1,6 +1,6 @@
 # Random Log Generator
 
-[![Docker and Helm CI](https://github.com/example/random-log-generator/actions/workflows/docker-helm-ci.yml/badge.svg)](https://github.com/example/random-log-generator/actions/workflows/docker-helm-ci.yml)
+[![Docker and Helm CI](https://github.com/sd416/random-log-generator/actions/workflows/docker-helm-ci.yml/badge.svg)](https://github.com/sd416/random-log-generator/actions/workflows/docker-helm-ci.yml)
 
 A Python package for generating realistic log entries with configurable rates and formats, including HTTP response-like entries, and support for writing logs to a file or the console.
 
@@ -21,7 +21,7 @@ A Python package for generating realistic log entries with configurable rates an
 ### From Source
 
 ```bash
-git clone https://github.com/example/random-log-generator.git
+git clone https://github.com/sd416/random-log-generator.git
 cd random-log-generator
 pip install -e .
 ```
@@ -53,7 +53,7 @@ If you want to deploy the Random Log Generator on a Kubernetes cluster, you can 
 
 ```bash
 # Clone the repository
-git clone https://github.com/example/random-log-generator.git
+git clone https://github.com/sd416/random-log-generator.git
 cd random-log-generator
 
 # Build and push the Docker image to your registry
@@ -76,7 +76,7 @@ For more information about the Helm chart, see the [Helm chart README](./helm/ra
 
 The script is configured through a YAML file. By default, it looks for `config.yaml` in the current directory, but you can specify a different path using the `-c` or `--config` option.
 
-### Example Configuration File
+### sd416 Configuration File
 
 ```yaml
 # Configuration parameters for the log generator
@@ -133,7 +133,7 @@ user_agent_systems:
 
 ### Environment Variables
 
-You can also override configuration values using environment variables. Environment variables should be prefixed with `LOG_GEN_` and be in uppercase. For example, `LOG_GEN_DURATION_NORMAL` would override `duration_normal`.
+You can also override configuration values using environment variables. Environment variables should be prefixed with `LOG_GEN_` and be in uppercase. For sd416, `LOG_GEN_DURATION_NORMAL` would override `duration_normal`.
 
 ## Usage
 
