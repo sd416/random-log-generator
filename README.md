@@ -1,6 +1,8 @@
-# Log Generator Script
+# Random Log Generator
 
-This script generates realistic log entries with configurable rates and formats, including HTTP response-like entries, and supports writing logs to a file or the console.
+[![Docker and Helm CI](https://github.com/example/random-log-generator/actions/workflows/docker-helm-ci.yml/badge.svg)](https://github.com/example/random-log-generator/actions/workflows/docker-helm-ci.yml)
+
+A Python package for generating realistic log entries with configurable rates and formats, including HTTP response-like entries, and support for writing logs to a file or the console.
 
 ## Features
 
@@ -12,68 +14,209 @@ This script generates realistic log entries with configurable rates and formats,
 - Generates random user agents for more realistic HTTP logs.
 - Collects metrics such as total logs generated, total bytes written, and average log generation rate.
 - Supports custom log formats.
+- Log rotation support.
+
+## Installation
+
+### From Source
+
+```bash
+git clone https://github.com/example/random-log-generator.git
+cd random-log-generator
+pip install -e .
+```
+
+### Using pip
+
+```bash
+pip install random-log-generator
+```
+
+### Using Docker
+
+You can also run the Random Log Generator using Docker:
+
+```bash
+# Build the Docker image
+docker build -t random-log-generator .
+
+# Run the container with default configuration
+docker run -v $(pwd)/logs:/app/logs random-log-generator
+
+# Run with a custom configuration file
+docker run -v $(pwd)/config.yaml:/app/config.yaml -v $(pwd)/logs:/app/logs random-log-generator --config config.yaml
+```
+
+### Using Kubernetes with Helm
+
+If you want to deploy the Random Log Generator on a Kubernetes cluster, you can use the provided Helm chart:
+
+```bash
+# Clone the repository
+git clone https://github.com/example/random-log-generator.git
+cd random-log-generator
+
+# Build and push the Docker image to your registry
+docker build -t your-registry/random-log-generator:latest .
+docker push your-registry/random-log-generator:latest
+
+# Update the image repository in values.yaml
+# Edit helm/random-log-generator/values.yaml and set image.repository to your-registry/random-log-generator
+
+# Install the Helm chart
+helm install my-log-generator ./helm/random-log-generator
+
+# For more details on configuration options
+helm show values ./helm/random-log-generator
+```
+
+For more information about the Helm chart, see the [Helm chart README](./helm/random-log-generator/README.md).
 
 ## Configuration
 
-The script is configured through the following parameters. Modify the configuration parameters at the beginning of the script to customize the log generation behavior. For example:
+The script is configured through a YAML file. By default, it looks for `config.yaml` in the current directory, but you can specify a different path using the `-c` or `--config` option.
 
-- `duration_normal`: Duration of the normal logging period in seconds.
-- `duration_peak`: Duration of the peak logging period in seconds.
-- `rate_normal_min`: Minimum log generation rate during the normal period (in MB/s).
-- `rate_normal_max`: Maximum log generation rate during the normal period (in MB/s).
-- `rate_peak`: Log generation rate during the peak period (in MB/s).
-- `log_line_size`: Average size of a log line in bytes.
-- `base_exit_probability`: Base probability of exiting early during a logging segment.
-- `rate_change_probability`: Probability of changing the maximum log generation rate.
-- `rate_change_max_percentage`: Maximum percentage change in the log generation rate.
-- `write_to_file`: Flag to indicate if logs should be written to a file (`True` or `False`).
-- `log_file_path`: File path for log output (if `write_to_file` is `True`).
-- `http_format_logs`: Flag to format logs in HTTP response-like format (`True` or `False`).
-- `custom_app_names`: List of custom application names to be included in log messages.
-- `custom_log_format`: Custom format for log messages.
+### Example Configuration File
 
-## Example Configuration Parameters
+```yaml
+# Configuration parameters for the log generator
+CONFIG:
+  duration_normal: 10        # Duration of normal log generation periods in seconds
+  duration_peak: 2           # Duration of peak log generation periods in seconds
+  rate_normal_min: 0.0001    # Minimum log generation rate during normal periods (MB/s)
+  rate_normal_max: 0.1       # Maximum log generation rate during normal periods (MB/s)
+  rate_peak: 0.500           # Log generation rate during peak periods (MB/s)
+  log_line_size: 100         # Approximate size of each log line in bytes
+  base_exit_probability: 0.05   # Base probability to exit early from a log generation segment
+  rate_change_probability: 0.1  # Probability to change the rate_max during random rate generation
+  rate_change_max_percentage: 0.1  # Max percentage change when rate_max is altered
+  write_to_file: true        # If true, logs will be written to a file; if false, logs will be printed to stdout
+  log_file_path: 'logs.txt'  # Path to the log file
+  log_rotation_enabled: true # If true, log rotation is enabled
+  log_rotation_size: 50      # Size threshold for log rotation in MB
+  http_format_logs: true     # If true, logs will be in HTTP log format
+  stop_after_seconds: 20     # If -1, the script runs indefinitely; else, stops after specified seconds
+  custom_app_names: []       # List of custom application names to include in logs
+  custom_log_format: "${timestamp}, ${log_level}, ${message}"  # Custom format string for logs
+  logging_level: 'INFO'      # Logging level for the script ('DEBUG', 'INFO', 'WARNING', 'ERROR')
 
-```python
-CONFIG = {
-    'duration_normal': 60,  # Duration of the normal logging period in seconds
-    'duration_peak': 10,  # Duration of the peak logging period in seconds
-    'rate_normal_min': 0.0005,  # Minimum log generation rate during the normal period (in MB/s)
-    'rate_normal_max': 0.8000,  # Maximum log generation rate during the normal period (in MB/s)
-    'rate_peak': 1.5000,  # Log generation rate during the peak period (in MB/s)
-    'log_line_size': 100,  # Average size of a log line in bytes
-    'base_exit_probability': 0.10,  # Base probability of exiting early during a logging segment
-    'rate_change_probability': 0.2,  # Probability of changing the maximum log generation rate
-    'rate_change_max_percentage': 0.3,  # Maximum percentage change in the log generation rate
-    'write_to_file': True,  # Flag to indicate if logs should be written to a file
-    'log_file_path': 'logs.txt',  # File path for log output
-    'http_format_logs': False,  # Flag to format logs in HTTP response-like format
-    'custom_app_names': ['App1', 'App2', 'App3'],  # List of custom application names
-    'custom_log_format': "{timestamp} {log_level} {ip_address} {user_agent} {message}"  # Custom log format
-}
+# Log levels to use in the logs
+log_levels:
+  - DEBUG
+  - INFO
+  - WARNING
+  - ERROR
 
+# HTTP status codes and corresponding messages
+http_status_codes:
+  '200 OK':
+    - 'API request received'
+    - 'API response sent'
+    # ... more messages ...
+  '400 Bad Request':
+    - 'Invalid user input detected'
+    # ... more messages ...
+  # ... more status codes ...
+
+# User agent browsers for generating user agents
+user_agent_browsers:
+  - 'Chrome'
+  - 'Firefox'
+  # ... more browsers ...
+
+# User agent systems for generating user agents
+user_agent_systems:
+  - 'Windows NT 10.0; Win64; x64'
+  - 'Macintosh; Intel Mac OS X 13_4'
+  # ... more systems ...
 ```
+
+### Environment Variables
+
+You can also override configuration values using environment variables. Environment variables should be prefixed with `LOG_GEN_` and be in uppercase. For example, `LOG_GEN_DURATION_NORMAL` would override `duration_normal`.
 
 ## Usage
 
-### Prerequisites
-
-- Python 3.9 and above
-
-### Running the Script
-
-1. Clone or download this repository.
-2. Open a terminal and navigate to the directory containing the script.
-3. Run the script using the following command:
+### Command Line
 
 ```bash
-python log_generator.py
+# Using the default config.yaml file
+random-log-generator
 
+# Using a custom configuration file
+random-log-generator -c /path/to/config.yaml
+
+# Enable verbose output
+random-log-generator -v
+
+# Show version information
+random-log-generator --version
+```
+
+### Python API
+
+```python
+from random_log_generator.config.config_loader import load_config
+from random_log_generator.core.generator import main
+
+# Load configuration
+config = load_config('config.yaml')
+
+# Run the generator
+main(config)
+```
+
+## Project Structure
+
+```
+random_log_generator/
+├── __init__.py
+├── cli.py
+├── config/
+│   ├── __init__.py
+│   ├── config_loader.py
+│   └── validators.py
+├── core/
+│   ├── __init__.py
+│   ├── generator.py
+│   ├── rate_limiter.py
+│   └── strategies.py
+├── formatters/
+│   ├── __init__.py
+│   ├── base.py
+│   ├── http.py
+│   └── custom.py
+├── output/
+│   ├── __init__.py
+│   ├── base.py
+│   ├── file_output.py
+│   ├── console_output.py
+│   └── rotation.py
+├── metrics/
+│   ├── __init__.py
+│   ├── collector.py
+│   └── reporter.py
+└── utils/
+    ├── __init__.py
+    ├── user_agents.py
+    └── ip_generator.py
 ```
 
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
+
+## CI/CD
+
+This project includes a GitHub Actions workflow for continuous integration:
+
+- **Docker Build**: Automatically builds and tests the Docker image
+- **Helm Lint**: Validates the Helm chart for syntax and best practices
+- **Helm Test**: Deploys the chart to a test Kubernetes cluster (using kind) and verifies functionality
+
+The workflow runs on every push to the main branch and on pull requests. You can also manually trigger it from the Actions tab in the GitHub repository.
+
+To view the workflow status, check the Actions tab in the GitHub repository or look for the status badge at the top of this README.
 
 ## License
 
