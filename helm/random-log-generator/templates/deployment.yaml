@@ -38,20 +38,20 @@ spec:
           readinessProbe:
             exec:
               command:
-                - sh
+                - python
                 - -c
-                - "ps aux | grep 'python -m random_log_generator.cli' | grep -v grep"
-            initialDelaySeconds: 5
+                - "import os; exit(0 if os.path.exists('/app/logs/generated_logs.log') else 1)"
+            initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
           livenessProbe:
             exec:
               command:
-                - sh
+                - python
                 - -c
-                - "ps aux | grep 'python -m random_log_generator.cli' | grep -v grep"
-            initialDelaySeconds: 15
-            periodSeconds: 20
+                - "import os, time; exit(0 if time.time() - os.path.getmtime('/app/logs/generated_logs.log') < 60 else 1)"
+            initialDelaySeconds: 20
+            periodSeconds: 30
             timeoutSeconds: 5
           volumeMounts:
             - name: config-volume
