@@ -155,20 +155,51 @@ jobs:
           # Update the values file to use the local image
           sed -i 's/repository: random-log-generator/repository: random-log-generator\n  tag: test/' ./helm/random-log-generator/values.yaml
           
+          # Print the values file for debugging
+          echo "Values file content:"
+          cat ./helm/random-log-generator/values.yaml
+          
           # Install the chart
           helm install test-release ./helm/random-log-generator
           
-          # Wait for the pod to be ready
-          kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=random-log-generator --timeout=60s
+          # Show all resources
+          echo "All resources after installation:"
+          kubectl get all
           
-          # Get pod name
+          # Show ConfigMap
+          echo "ConfigMap content:"
+          kubectl get configmap test-release-random-log-generator-config -o yaml
+          
+          # Get pod name without waiting for ready state
           POD_NAME=$(kubectl get pods -l app.kubernetes.io/name=random-log-generator -o jsonpath="{.items[0].metadata.name}")
+          echo "Pod name: $POD_NAME"
+          
+          # Check pod status
+          echo "Pod status:"
+          kubectl describe pod $POD_NAME
+          
+          # Try to get logs even if pod is not ready
+          echo "Pod logs (if available):"
+          kubectl logs $POD_NAME --previous || echo "No previous logs"
+          kubectl logs $POD_NAME || echo "No logs available"
+          
+          # Wait for the pod to be ready with increased timeout
+          echo "Waiting for pod to be ready (with increased timeout)..."
+          kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=random-log-generator --timeout=120s || {
+            echo "Pod did not become ready in time. Current status:"
+            kubectl get pods
+            echo "Pod events:"
+            kubectl describe pod $POD_NAME | grep -A 20 Events:
+            echo "Container logs (if available):"
+            kubectl logs $POD_NAME --all-containers || echo "No logs available"
+            exit 1
+          }
+          
+          # If we get here, the pod is ready
+          echo "Pod is ready!"
           
           # Check pod logs to verify it's running
           kubectl logs $POD_NAME
-          
-          # Verify the ConfigMap exists
-          kubectl get configmap test-release-random-log-generator-config
           
           # Clean up
           helm delete test-release

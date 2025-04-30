@@ -31,9 +31,28 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["python", "-m", "random_log_generator.cli"]
           args:
             - "--config"
             - "/app/config/config.yaml"
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "ps aux | grep 'python -m random_log_generator.cli' | grep -v grep"
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "ps aux | grep 'python -m random_log_generator.cli' | grep -v grep"
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
           volumeMounts:
             - name: config-volume
               mountPath: /app/config
