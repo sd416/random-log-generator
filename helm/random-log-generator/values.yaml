@@ -6,7 +6,8 @@ replicaCount: 1
 image:
   repository: random-log-generator
   pullPolicy: IfNotPresent
-  tag: "latest"
+  # Use "test" as the default tag to match what we build in CI
+  tag: "test"
 
 imagePullSecrets: []
 nameOverride: ""

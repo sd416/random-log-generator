@@ -148,19 +148,36 @@ jobs:
 
       - name: Load Docker image into kind
         run: |
+          # Load the image into kind
+          echo "Loading image into kind cluster..."
           kind load docker-image random-log-generator:test --name kind-test
+          
+          # Verify the image is loaded
+          echo "Verifying image is loaded in kind cluster..."
+          docker exec kind-test-control-plane crictl images | grep random-log-generator
 
       - name: Install Helm chart
         run: |
-          # Update the values file to use the local image
-          sed -i 's/repository: random-log-generator/repository: random-log-generator\n  tag: test/' ./helm/random-log-generator/values.yaml
+          # Create a temporary values file that overrides the image settings
+          cat > custom-values.yaml << EOF
+          image:
+            repository: random-log-generator
+            tag: test
+            # Use "Never" to ensure kind uses the locally loaded image
+            pullPolicy: Never
+          EOF
           
-          # Print the values file for debugging
-          echo "Values file content:"
+          # Print the custom values file for debugging
+          echo "Custom values file content:"
+          cat custom-values.yaml
+          
+          # Print the Helm chart values for debugging
+          echo "Helm chart values.yaml content:"
           cat ./helm/random-log-generator/values.yaml
           
-          # Install the chart
-          helm install test-release ./helm/random-log-generator
+          # Install the chart with custom values
+          echo "Installing Helm chart with custom values..."
+          helm install test-release ./helm/random-log-generator --values custom-values.yaml --debug
           
           # Show all resources
           echo "All resources after installation:"
