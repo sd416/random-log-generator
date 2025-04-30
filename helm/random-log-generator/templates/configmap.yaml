@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "random-log-generator.labels" . | nindent 4 }}
 data:
-  config.yaml: |
+  config.yaml: |-
     # Configuration parameters for the log generator
     CONFIG:
       duration_normal: {{ .Values.config.durationNormal }}
@@ -18,17 +18,17 @@ data:
       rate_change_probability: {{ .Values.config.rateChangeProbability }}
       rate_change_max_percentage: {{ .Values.config.rateChangeMaxPercentage }}
       write_to_file: {{ .Values.config.writeToFile }}
-      log_file_path: {{ .Values.config.outputPath | quote }}
+      log_file_path: {{ quote .Values.config.outputPath }}
       log_rotation_enabled: {{ .Values.config.rotationEnabled }}
       log_rotation_size: {{ .Values.config.rotationSize }}
       http_format_logs: {{ eq .Values.config.format "http" }}
       stop_after_seconds: {{ .Values.config.stopAfterSeconds }}
-      custom_app_names: [{{ .Values.config.customAppNames | join ", " }}]
-      custom_log_format: {{ .Values.config.customFormat | quote }}
-      logging_level: {{ .Values.config.loggingLevel | quote }}
+      custom_app_names: [{{ join ", " .Values.config.customAppNames }}]
+      custom_log_format: {{ quote .Values.config.customFormat }}
+      logging_level: {{ quote .Values.config.loggingLevel }}
 
     # Log levels to use in the logs
     log_levels:
-      {{- range .Values.config.logLevels }}
+    {{- range .Values.config.logLevels }}
       - {{ . }}
-      {{- end }}
+    {{- end }}

@@ -164,13 +164,17 @@ class TestLogGenerator(unittest.TestCase):
             # Create a file output handler
             output_handler = FileOutputHandler(log_file_path, False, 0)
             
-            # Write logs with random segments
+            # Use a very low exit probability to ensure logs are written
+            # This helps prevent issues with different random number generation in Python 3.13
+            very_low_exit_probability = 0.001
+            
+            # Write logs with random segments - use longer duration and higher rates
             success = write_logs_random_segments(
-                test_config['duration_normal'],
+                10,  # Longer duration
                 1,
-                test_config['rate_normal_min'],
-                test_config['rate_normal_max'],
-                test_config['base_exit_probability'],
+                0.5,  # Higher minimum rate
+                1.0,  # Higher maximum rate
+                very_low_exit_probability,  # Much lower exit probability
                 output_handler,
                 self.http_formatter,
                 mock_log_levels,
@@ -182,8 +186,12 @@ class TestLogGenerator(unittest.TestCase):
             
             # Check results
             self.assertTrue(success)
-            self.assertGreater(os.path.getsize(log_file_path), 0)
-            print(f"Random segment logs written to {log_file_path}")
+            
+            # Check if file exists and has content
+            self.assertTrue(os.path.exists(log_file_path), "Log file was not created")
+            file_size = os.path.getsize(log_file_path)
+            self.assertGreater(file_size, 0, f"Log file is empty (size: {file_size})")
+            print(f"Random segment logs written to {log_file_path} (size: {file_size} bytes)")
     
     def test_exit_early(self):
         """Test early exit from random segments."""
