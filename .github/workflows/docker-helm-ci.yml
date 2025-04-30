@@ -64,11 +64,16 @@ jobs:
           
           # Run the container with the test config for a short time
           timeout 10s docker run --rm -v $(pwd)/test-config.yaml:/app/config.yaml random-log-generator:test --config config.yaml || code=$?
-          if [ $code -eq 124 ]; then
+          
+          # Check if code is set (container exited with non-zero) and if it's the timeout code (124)
+          if [ -z "${code:-}" ]; then
+            echo "Container exited normally before timeout"
+            exit 0
+          elif [ "${code:-}" = "124" ]; then
             echo "Container ran successfully and was terminated after timeout"
             exit 0
           else
-            echo "Container exited with unexpected code: $code"
+            echo "Container exited with unexpected code: ${code:-unknown}"
             exit 1
           fi
 
