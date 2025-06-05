@@ -38,6 +38,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.2.2
 
+      - name: Clean Docker Build Cache
+        run: |
+          docker builder prune -af || true
+          docker system prune -af || true
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.10.0
 
@@ -50,6 +55,7 @@ jobs:
           tags: random-log-generator:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          no-cache: true # Explicitly disable cache for this build step
 
       - name: Test Docker image
         run: |
@@ -65,6 +71,7 @@ jobs:
             rate_normal_max: 0.1
             rate_peak: 0.500
             log_line_size: 100
+            log_line_size_estimate: 100 # Added missing parameter
             base_exit_probability: 0.05
             rate_change_probability: 0.1
             rate_change_max_percentage: 0.1
