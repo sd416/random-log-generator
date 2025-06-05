@@ -9,11 +9,12 @@ import logging
 import random
 import time
 
-from random_log_generator.core.generator import write_logs
+# Removed: from random_log_generator.core.generator import write_logs
 
 
 def write_logs_random_rate(duration, rate_min, rate_max, output_handler, formatter, log_levels,
-                          metrics=None, rate_change_probability=0.2, rate_change_max_percentage=0.3):
+                          log_line_size_estimate, write_logs_func, metrics=None, 
+                          rate_change_probability=0.2, rate_change_max_percentage=0.3):
     """
     Write logs at a random rate between rate_min and rate_max for a given duration.
     
@@ -24,6 +25,8 @@ def write_logs_random_rate(duration, rate_min, rate_max, output_handler, formatt
         output_handler: The output handler to use for writing logs.
         formatter: The formatter to use for formatting log lines.
         log_levels (list): List of log levels to choose from.
+        log_line_size_estimate (int): Estimated size of a single log line in bytes.
+        write_logs_func (callable): The function to call for writing logs (e.g., core.generator.write_logs).
         metrics (Metrics, optional): Metrics collector to update with statistics.
         rate_change_probability (float, optional): Probability of changing the maximum log generation rate.
         rate_change_max_percentage (float, optional): Maximum percentage change in the log generation rate.
@@ -49,7 +52,8 @@ def write_logs_random_rate(duration, rate_min, rate_max, output_handler, formatt
         logging.info(f"Selected random rate: {rate:.4f} MB/s")
         
         # Write logs at the selected rate for the segment duration
-        success = write_logs(rate, segment_duration, output_handler, formatter, log_levels, metrics)
+        success = write_logs_func(rate, segment_duration, output_handler, formatter, log_levels, 
+                                  log_line_size_estimate, metrics)
         if not success:
             return False
         
@@ -61,7 +65,7 @@ def write_logs_random_rate(duration, rate_min, rate_max, output_handler, formatt
 
 def write_logs_random_segments(total_duration, segment_max_duration, rate_min, rate_max,
                               base_exit_probability, output_handler, formatter, log_levels,
-                              metrics=None):
+                              log_line_size_estimate, write_logs_func, metrics=None):
     """
     Write logs in random segments with a chance to exit early.
     
@@ -74,6 +78,8 @@ def write_logs_random_segments(total_duration, segment_max_duration, rate_min, r
         output_handler: The output handler to use for writing logs.
         formatter: The formatter to use for formatting log lines.
         log_levels (list): List of log levels to choose from.
+        log_line_size_estimate (int): Estimated size of a single log line in bytes.
+        write_logs_func (callable): The function to call for writing logs.
         metrics (Metrics, optional): Metrics collector to update with statistics.
         
     Returns:
@@ -96,7 +102,8 @@ def write_logs_random_segments(total_duration, segment_max_duration, rate_min, r
         # Write logs at a random rate for the segment duration
         success = write_logs_random_rate(
             segment_duration, rate_min, rate_max,
-            output_handler, formatter, log_levels, metrics
+            output_handler, formatter, log_levels, log_line_size_estimate, 
+            write_logs_func, metrics
         )
         
         if not success:

@@ -26,7 +26,9 @@ test_config = {
     'rate_normal_min': 0.1,     # Increased rates to ensure logs are written
     'rate_normal_max': 0.5,
     'rate_peak': 1.0,
-    'log_line_size': 100,
+    'log_line_size_estimate': 100, # Renamed from log_line_size
+    'user_agent_pool_size': 10,    # Added for consistency
+    'max_segment_duration_normal': 5, # Added for consistency
     'base_exit_probability': 0.1,
     'rate_change_probability': 0.2,
     'rate_change_max_percentage': 0.1,
@@ -116,6 +118,7 @@ class TestLogGenerator(unittest.TestCase):
                 output_handler,
                 self.http_formatter,
                 mock_log_levels,
+                test_config['log_line_size_estimate'], # Added log_line_size_estimate
                 metrics_instance
             )
             
@@ -144,6 +147,8 @@ class TestLogGenerator(unittest.TestCase):
                 output_handler,
                 self.http_formatter,
                 mock_log_levels,
+                test_config['log_line_size_estimate'], # Added log_line_size_estimate
+                write_logs, # Added write_logs_func
                 metrics_instance
             )
             
@@ -178,6 +183,8 @@ class TestLogGenerator(unittest.TestCase):
                 output_handler,
                 self.http_formatter,
                 mock_log_levels,
+                test_config['log_line_size_estimate'], # Added log_line_size_estimate
+                write_logs, # Added write_logs_func
                 metrics_instance
             )
             
@@ -213,6 +220,8 @@ class TestLogGenerator(unittest.TestCase):
                     output_handler,
                     self.http_formatter,
                     mock_log_levels,
+                    test_config['log_line_size_estimate'], # Added log_line_size_estimate
+                    write_logs, # Added write_logs_func
                     metrics_instance
                 )
             
@@ -230,15 +239,27 @@ class TestLogGenerator(unittest.TestCase):
             log_file_path = os.path.join(tmp_dir, "test_main_logs.txt")
             
             # Create a copy of the test config with updated file path
-            config = test_config.copy()
-            config['log_file_path'] = log_file_path
-            config['write_to_file'] = True
-            config['stop_after_seconds'] = 2  # Reduced for faster testing
+            config_params = test_config.copy()
+            config_params['log_file_path'] = log_file_path
+            config_params['write_to_file'] = True
+            config_params['stop_after_seconds'] = 2  # Reduced for faster testing
+            
+            full_mock_config = {
+                'CONFIG': config_params,
+                'log_levels': mock_log_levels,
+                'http_status_codes': mock_http_status_codes,
+                'user_agent_browsers': ["Chrome", "Firefox"], # Add other root keys if needed by main/init
+                'user_agent_systems': ["Windows NT 10.0", "Macintosh"]
+            }
             
             # Mock the config_loader.load_config function to return our test config
-            with mock.patch('random_log_generator.config.config_loader.load_config', return_value=config):
+            # Note: main itself is called with the full_mock_config, not just config_params
+            # The mock for load_config is if main were to call it internally, which it no longer does.
+            # However, if cli.py calls load_config, this mock would apply there if tests cover cli.
+            # For directly testing main, we pass full_mock_config.
+            with mock.patch('random_log_generator.config.config_loader.load_config', return_value=full_mock_config):
                 # Run the main function
-                exit_code = main(config)
+                exit_code = main(full_mock_config)
                 
                 # Check results
                 self.assertEqual(exit_code, 0)
@@ -248,17 +269,24 @@ class TestLogGenerator(unittest.TestCase):
     def test_main_console_output(self):
         """Test the main function with console output."""
         # Create a copy of the test config
-        config = test_config.copy()
-        config['write_to_file'] = False
-        config['stop_after_seconds'] = 2  # Reduced for faster testing
+        config_params = test_config.copy()
+        config_params['write_to_file'] = False
+        config_params['stop_after_seconds'] = 2  # Reduced for faster testing
+        
+        full_mock_config = {
+            'CONFIG': config_params,
+            'log_levels': mock_log_levels,
+            'http_status_codes': mock_http_status_codes,
+            'user_agent_browsers': ["Chrome", "Firefox"],
+            'user_agent_systems': ["Windows NT 10.0", "Macintosh"]
+        }
         
         # Create a metrics instance
         metrics_instance = Metrics()
         
-        # Mock the config_loader.load_config function to return our test config
-        with mock.patch('random_log_generator.config.config_loader.load_config', return_value=config):
+        with mock.patch('random_log_generator.config.config_loader.load_config', return_value=full_mock_config):
             # Run the main function
-            exit_code = main(config, metrics_instance)
+            exit_code = main(full_mock_config, metrics_instance)
             
             # Check results
             self.assertEqual(exit_code, 0)
@@ -328,7 +356,7 @@ class TestLogGenerator(unittest.TestCase):
         )
         
         # Format a log line
-        timestamp = "2023-01-01T12:00:00Z"
+        timestamp = "2025-01-01T12:00:00Z"
         log_level = "INFO"
         message = "This is a test message"
         log_line = formatter.format_log(timestamp, log_level, message)
