@@ -35,16 +35,19 @@ def load_config(config_path='config.yaml'):
         logging.error(f"Error parsing '{config_path}': {e}")
         raise
     
-    # Extract configurations
-    config = config_data.get('CONFIG', {})
+    # Extract the 'CONFIG' sub-dictionary to apply environment overrides
+    config_params = config_data.get('CONFIG', {})
     
-    # Override with environment variables if present
-    override_from_env(config)
+    # Override with environment variables if present (modifies config_params in-place)
+    override_from_env(config_params)
     
-    return config
+    # Ensure the main config_data reflects any overrides made to its 'CONFIG' part
+    config_data['CONFIG'] = config_params
+    
+    return config_data
 
 
-def override_from_env(config):
+def override_from_env(config_params):
     """
     Override configuration values with environment variables.
     
@@ -52,26 +55,26 @@ def override_from_env(config):
     For example, 'LOG_GEN_DURATION_NORMAL' would override 'duration_normal'.
     
     Args:
-        config (dict): Configuration dictionary to update.
+        config_params (dict): 'CONFIG' sub-dictionary to update.
     """
     prefix = 'LOG_GEN_'
-    for key in list(config.keys()):
+    for key in list(config_params.keys()):
         env_key = f"{prefix}{key.upper()}"
         if env_key in os.environ:
             env_value = os.environ[env_key]
             
             # Try to convert to the same type as the original value
-            original_type = type(config[key])
+            original_type = type(config_params[key])
             try:
                 if original_type == bool:
                     # Special handling for boolean values
-                    config[key] = env_value.lower() in ('true', 'yes', '1', 'y')
+                    config_params[key] = env_value.lower() in ('true', 'yes', '1', 'y')
                 elif original_type == list:
                     # Split comma-separated values for lists
-                    config[key] = [item.strip() for item in env_value.split(',')]
+                    config_params[key] = [item.strip() for item in env_value.split(',')]
                 else:
                     # For other types, use the constructor
-                    config[key] = original_type(env_value)
+                    config_params[key] = original_type(env_value)
                 logging.info(f"Configuration '{key}' overridden from environment variable")
             except (ValueError, TypeError) as e:
                 logging.warning(f"Could not convert environment variable {env_key} to {original_type.__name__}: {e}")

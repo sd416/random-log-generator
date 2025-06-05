@@ -5,7 +5,9 @@ CONFIG:
   rate_normal_min: 0.0001    # Minimum log generation rate during normal periods (MB/s)
   rate_normal_max: 0.1    # Maximum log generation rate during normal periods (MB/s)
   rate_peak: 0.500           # Log generation rate during peak periods (MB/s)
-  log_line_size: 100         # Approximate size of each log line in bytes
+  log_line_size_estimate: 100 # Approximate size of each log line in bytes (used for rate calculation)
+  user_agent_pool_size: 100  # Number of user agents to pre-generate and keep in a pool
+  max_segment_duration_normal: 5 # Maximum duration for a single segment during normal log generation (seconds)
   base_exit_probability: 0.05   # Base probability to exit early from a log generation segment
   rate_change_probability: 0.1  # Probability to change the rate_max during random rate generation
   rate_change_max_percentage: 0.1  # Max percentage change when rate_max is altered
