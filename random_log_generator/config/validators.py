@@ -27,7 +27,8 @@ REQUIRED_CONFIG_KEYS = [
     'http_format_logs',
     'stop_after_seconds',
     'custom_app_names',
-    'custom_log_format'
+    'custom_log_format',
+    'logging_level'
 ]
 
 
@@ -83,6 +84,7 @@ def validate_config(config):
     # Validate string values
     validate_string(config_params, 'log_file_path')
     validate_string(config_params, 'custom_log_format')
+    validate_logging_level(config_params, 'logging_level')
     
     # Validate list values
     validate_list(config_params, 'custom_app_names')
@@ -205,5 +207,29 @@ def validate_dict(config, key):
     value = config[key]
     if not isinstance(value, dict):
         error_msg = f"Configuration parameter '{key}' must be a dictionary, got {type(value).__name__}"
+        logging.error(error_msg)
+        raise ValueError(error_msg)
+
+
+def validate_logging_level(config, key):
+    """
+    Validate that a configuration value is a valid logging level.
+    
+    Args:
+        config (dict): Configuration dictionary.
+        key (str): Key to validate.
+        
+    Raises:
+        ValueError: If the value is not a valid logging level.
+    """
+    value = config[key]
+    if not isinstance(value, str):
+        error_msg = f"Configuration parameter '{key}' must be a string, got {type(value).__name__}"
+        logging.error(error_msg)
+        raise ValueError(error_msg)
+    
+    valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+    if value.upper() not in valid_levels:
+        error_msg = f"Configuration parameter '{key}' must be one of {valid_levels}, got '{value}'"
         logging.error(error_msg)
         raise ValueError(error_msg)
