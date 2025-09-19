@@ -70,8 +70,9 @@ jobs:
             rate_normal_min: 0.0001
             rate_normal_max: 0.1
             rate_peak: 0.500
-            log_line_size: 100
-            log_line_size_estimate: 100 # Added missing parameter
+            log_line_size_estimate: 100
+            user_agent_pool_size: 100
+            max_segment_duration_normal: 5
             base_exit_probability: 0.05
             rate_change_probability: 0.1
             rate_change_max_percentage: 0.1
@@ -91,6 +92,28 @@ jobs:
             - INFO
             - WARNING
             - ERROR
+
+          # HTTP status codes and corresponding messages
+          http_status_codes:
+            '200 OK':
+              - 'API request received'
+              - 'API response sent'
+            '400 Bad Request':
+              - 'Invalid user input detected'
+            '500 Internal Server Error':
+              - 'Unexpected error occurred'
+
+          # User agent browsers for generating user agents
+          user_agent_browsers:
+            - 'Chrome'
+            - 'Firefox'
+            - 'Safari'
+
+          # User agent systems for generating user agents
+          user_agent_systems:
+            - 'Windows NT 10.0; Win64; x64'
+            - 'Macintosh; Intel Mac OS X 13_4'
+            - 'X11; Linux x86_64'
           EOF
           
           # Run the container with the test config for a short time
