@@ -34,7 +34,25 @@ pip install random-log-generator
 
 ### Using Docker
 
-You can also run the Random Log Generator using Docker:
+You can run the Random Log Generator using Docker in several ways:
+
+#### Using Pre-built Images from GitHub Container Registry
+
+```bash
+# Pull and run the latest image
+docker run -v $(pwd)/logs:/app/logs ghcr.io/sd416/random-log-generator:latest
+
+# Run a specific version
+docker run -v $(pwd)/logs:/app/logs ghcr.io/sd416/random-log-generator:v0.1.0
+
+# Run with a custom configuration file
+docker run -v $(pwd)/config.yaml:/app/config.yaml -v $(pwd)/logs:/app/logs ghcr.io/sd416/random-log-generator:latest --config config.yaml
+
+# Run with environment variable overrides
+docker run -e LOG_GEN_STOP_AFTER_SECONDS=30 -v $(pwd)/logs:/app/logs ghcr.io/sd416/random-log-generator:latest
+```
+
+#### Building from Source
 
 ```bash
 # Build the Docker image
@@ -46,6 +64,14 @@ docker run -v $(pwd)/logs:/app/logs random-log-generator
 # Run with a custom configuration file
 docker run -v $(pwd)/config.yaml:/app/config.yaml -v $(pwd)/logs:/app/logs random-log-generator --config config.yaml
 ```
+
+#### Available Image Tags
+
+- `latest` - Latest stable release from the main branch
+- `v{version}` - Specific version tags (e.g., `v0.1.0`, `v0.2.0`)
+- `main` - Latest development build from the main branch
+
+Images are automatically built for both `linux/amd64` and `linux/arm64` platforms.
 
 ### Using Kubernetes with Helm
 

@@ -13,7 +13,9 @@ data:
       rate_normal_min: {{ .Values.config.rateNormalMin }}
       rate_normal_max: {{ .Values.config.rateNormalMax }}
       rate_peak: {{ .Values.config.ratePeak }}
-      log_line_size: {{ .Values.config.logLineSize }}
+      log_line_size_estimate: {{ .Values.config.logLineSize }}
+      user_agent_pool_size: {{ .Values.config.userAgentPoolSize | default 100 }}
+      max_segment_duration_normal: {{ .Values.config.maxSegmentDurationNormal | default 5 }}
       base_exit_probability: {{ .Values.config.baseExitProbability }}
       rate_change_probability: {{ .Values.config.rateChangeProbability }}
       rate_change_max_percentage: {{ .Values.config.rateChangeMaxPercentage }}
@@ -32,3 +34,119 @@ data:
     {{- range .Values.config.logLevels }}
       - {{ . }}
     {{- end }}
+
+    # HTTP status codes and corresponding messages
+    http_status_codes:
+      '200 OK':
+        - 'API request received'
+        - 'API response sent'
+        - 'Application deployment completed'
+        - 'Application deployment started'
+        - 'Application rollback completed'
+        - 'Application rollback initiated'
+        - 'Backup completed successfully'
+        - 'Cache cleared'
+        - 'Configuration updated'
+        - 'Database connection established'
+        - 'Data fetched successfully'
+        - 'Data processed successfully'
+        - 'Email sent successfully'
+        - 'File uploaded successfully'
+        - 'New user registered'
+        - 'Password change requested'
+        - 'Password change successful'
+        - 'Payment transaction completed'
+        - 'Scheduled task completed'
+        - 'Scheduled task started'
+        - 'Service health check passed'
+        - 'Service started'
+        - 'Service stopped'
+        - 'Session token refreshed'
+        - 'SMS sent successfully'
+        - 'User account unlocked'
+        - 'User login successful'
+        - 'User logged out'
+        - 'User profile updated'
+      '400 Bad Request':
+        - 'Invalid user input detected'
+        - 'Configuration validation error'
+        - 'Credit card validation error'
+        - 'License key expired'
+        - 'Service rate limit exceeded'
+        - 'Service quota exceeded'
+        - 'Request body too large'
+        - 'Invalid request header'
+        - 'Missing required parameter'
+      '401 Unauthorized':
+        - 'User login failed'
+        - 'Permission denied'
+        - 'Unauthorized access attempt detected'
+        - 'Invalid authentication token'
+        - 'Authentication token expired'
+      '403 Forbidden':
+        - 'Permission denied'
+        - 'Access to resource forbidden'
+        - 'Account suspended'
+      '404 Not Found':
+        - 'File not found'
+        - 'Service endpoint deprecated'
+        - 'Service endpoint removed'
+        - 'Resource not found'
+        - 'User not found'
+      '500 Internal Server Error':
+        - 'Error fetching data from database'
+        - 'Unexpected error occurred'
+        - 'Resource allocation failure'
+        - 'Database connection lost'
+        - 'Cache update failed'
+        - 'Backup failed'
+        - 'Password change failed'
+        - 'Service health check failed'
+        - 'File upload failed'
+        - 'User profile update failed'
+        - 'Email delivery failed'
+        - 'SMS delivery failed'
+        - 'Payment transaction failed'
+        - 'User account locked'
+        - 'Service degraded'
+        - 'High memory usage detected'
+        - 'Memory leak detected'
+        - 'System backup cancelled'
+        - 'User subscription cancelled'
+        - 'Trial period ended'
+        - 'Database migration started'
+        - 'Database migration completed'
+        - 'Cloud resource deprovisioned'
+        - 'API key revoked'
+        - 'User role update failed'
+        - 'Service unavailable'
+        - 'Timeout error'
+      '503 Service Unavailable':
+        - 'Service temporarily unavailable'
+        - 'Maintenance in progress'
+        - 'Server overloaded'
+
+    # User agent browsers for generating user agents
+    user_agent_browsers:
+      - 'Chrome'
+      - 'Firefox'
+      - 'Safari'
+      - 'Edge'
+      - 'Opera'
+      - 'Brave'
+
+    # User agent systems for generating user agents
+    user_agent_systems:
+      - 'Windows NT 10.0; Win64; x64'
+      - 'Macintosh; Intel Mac OS X 13_4' 
+      - 'iPhone; CPU iPhone OS 16_5 like Mac OS X'
+      - 'X11; Linux x86_64'
+      - 'Linux; Android 13; K'
+      - 'iPad; CPU OS 16_5 like Mac OS X'
+      - 'Macintosh; Intel Mac OS X 13_4_1'
+      - 'Windows NT 10.0; WOW64'
+      - 'X11; Ubuntu; Linux i686'
+      - 'Macintosh; Intel Mac OS X 10_15_7'
+      - 'Linux; Android 13; SM-S918B'
+      - 'Linux; Android 14; Pixel 7'
+      - 'ChromeOS; x86_64 15183.78.0'

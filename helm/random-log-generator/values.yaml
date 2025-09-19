@@ -61,7 +61,9 @@ config:
   rateNormalMin: 0.0001
   rateNormalMax: 0.1
   ratePeak: 0.500
-  logLineSize: 100
+  logLineSize: 100  # This maps to log_line_size_estimate in the config
+  userAgentPoolSize: 100  # Number of user agents to pre-generate
+  maxSegmentDurationNormal: 5  # Maximum duration for a single segment during normal log generation
   baseExitProbability: 0.05
   rateChangeProbability: 0.1
   rateChangeMaxPercentage: 0.1
